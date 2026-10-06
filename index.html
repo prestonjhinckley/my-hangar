@@ -1,0 +1,2174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>My Hangar</title>
+<meta name="description" content="A display case for finished scale models.">
+<meta name="theme-color" content="#0d0f13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hangar">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+/* the same base the claude.ai artifact wrapper gives the page */
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+/* Inter, served with the app so it works offline */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400 800; font-display: swap; src: url(fonts/inter-latin-ext.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400 800; font-display: swap; src: url(fonts/inter-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+</style>
+<script src="platform.js"></script>
+</head>
+<body>
+<style>
+/* Layout: phone-first single column; museum display case (spotlit stage) per model; fixed bottom tab bar with a raised gold + */
+/* Deliberately dark-only, as specified: one "display case at night" look. */
+:root {
+  color-scheme: dark;
+  --bg: #0d0f13;
+  --bg-2: #0a0c0f;
+  --card: #151920;
+  --card-2: #1b2029;
+  --line: #262c36;
+  --line-2: #323a46;
+  --fg: #eef0f3;
+  --fg-2: #a9b0bb;
+  --fg-3: #737b87;
+  --gold: #e9c27a;
+  --gold-ink: #241a06;
+  --green: #7fd69a;
+  --green-bg: rgba(68, 160, 98, .14);
+  --green-line: rgba(127, 214, 154, .45);
+  --red: #f08a7e;
+  --red-bg: rgba(220, 80, 64, .14);
+  --stage-hi: #2b313b;
+  --stage-mid: #161a20;
+  --stage-lo: #090a0d;
+  --shadow: rgba(0, 0, 0, .62);
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --r: 18px;
+  --r-sm: 12px;
+  --tab-h: 74px;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+body {
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 0 calc(var(--tab-h) + 40px + env(safe-area-inset-bottom, 0px));
+}
+.eyebrow {
+  font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--gold);
+}
+.label {
+  font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3);
+}
+.muted { color: var(--fg-2); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Top bar */
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; gap: 8px;
+  padding-block: 10px; background: linear-gradient(var(--bg) 70%, transparent);
+}
+.topbar .t { text-align: center; color: var(--fg-2); font-weight: 500; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.circle-btn {
+  width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); background: var(--card);
+  display: grid; place-items: center; color: var(--fg);
+}
+.circle-btn svg { width: 22px; height: 22px; }
+
+/* Page headings */
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-block: 20px 14px; flex-wrap: wrap; }
+.page-head h1 { font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.count-pill {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 8px 14px; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line); font-weight: 600;
+}
+.count-pill b { color: var(--gold); font-size: 18px; }
+
+/* Search + filters */
+.search {
+  display: flex; align-items: center; gap: 10px; height: 54px; padding-inline: 16px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+}
+.search svg { width: 20px; height: 20px; color: var(--fg-3); flex: none; }
+.search input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: 17px; }
+.search input::placeholder { color: var(--fg-3); }
+.filters { display: flex; flex-wrap: wrap; gap: 10px; padding-block: 12px 4px; }
+.filters select {
+  appearance: none; -webkit-appearance: none; height: 44px; padding: 0 34px 0 14px; border-radius: 999px;
+  background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a9b0bb' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+  border: 1px solid var(--line); font-size: 15px; font-weight: 500; max-width: 100%;
+}
+.filters select.on { border-color: var(--gold); color: var(--gold); }
+.clear-link { height: 44px; padding: 0 12px; border: 0; background: none; color: var(--fg-2); text-decoration: underline; text-underline-offset: 3px; }
+.notice .clear-link { height: auto; padding: 2px 4px; color: var(--gold); }
+
+/* Grid */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding-block: 14px; }
+@media (min-width: 640px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; } }
+@media (min-width: 900px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tile {
+  display: flex; flex-direction: column; text-align: left; padding: 0; border-radius: var(--r);
+  background: var(--card); border: 1px solid var(--line); overflow: hidden; min-width: 0;
+}
+.tile .stage { aspect-ratio: 4 / 3; border-radius: 0; }
+.tile .meta { padding: 10px 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.tile .name { font-weight: 700; font-size: 15px; line-height: 1.3; overflow-wrap: anywhere; }
+.tile .sub { font-size: 13px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .scale { font-size: 12px; color: var(--fg-3); font-weight: 600; letter-spacing: .04em; }
+
+/* Display stage: radial spotlight + floor shadow */
+.stage {
+  position: relative; overflow: hidden; width: 100%; max-width: 100%;
+  background:
+    radial-gradient(ellipse 62% 58% at 50% 40%, var(--stage-hi) 0%, var(--stage-mid) 55%, var(--stage-lo) 100%);
+}
+.stage::after {
+  content: ""; position: absolute; left: 18%; right: 18%; bottom: 7%; height: 9%;
+  background: radial-gradient(ellipse at center, var(--shadow) 0%, transparent 70%);
+  pointer-events: none;
+}
+.stage.framed::after { display: none; }
+.stage img {
+  position: absolute; z-index: 1; left: 6%; top: 7%; width: 88%; height: 78%; max-width: none;
+  object-fit: contain; font-size: 0;
+}
+.stage.cutout img { filter: drop-shadow(0 14px 14px var(--shadow)); }
+.stage.framed img {
+  left: 0; top: 0; width: 100%; height: 100%; object-fit: cover;
+  -webkit-mask-image: radial-gradient(ellipse 72% 72% at 50% 50%, #000 45%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 72% at 50% 50%, #000 45%, transparent 100%);
+}
+.stage .ph { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fg-3); font-size: 14px; }
+
+/* AI badge */
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px;
+  background: var(--green-bg); border: 1px solid var(--green-line); color: var(--green);
+  font-size: 14px; font-weight: 600; line-height: 1;
+}
+button.ai-badge { min-height: 36px; }
+
+/* Detail */
+.hero { border-radius: 22px; aspect-ratio: 5 / 4; }
+@media (min-width: 720px) { .hero { aspect-ratio: 16 / 10; } }
+.hero .ai-badge { position: absolute; z-index: 2; top: 14px; left: 14px; }
+.hero .dots { position: absolute; z-index: 2; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
+.hero .dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--fg-3); }
+.hero .dots i.on { width: 22px; background: var(--fg); }
+.hero-btn { display: block; width: 100%; padding: 0; border: 0; background: none; }
+.detail-head { display: grid; gap: 6px; padding-block: 22px 14px; }
+.detail-head h1 { font-size: clamp(28px, 7.5vw, 40px); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; overflow-wrap: anywhere; }
+.detail-head .unit { font-size: 18px; color: var(--fg-2); }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; padding-block: 4px 18px; }
+.chip { padding: 9px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); font-weight: 600; font-size: 15px; }
+.cards { display: grid; gap: 14px; }
+@media (min-width: 820px) { .cards { grid-template-columns: 1fr 1fr; align-items: start; } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px 20px; display: grid; gap: 12px; min-width: 0; }
+.card .story { font-size: 16px; line-height: 1.6; color: var(--fg); max-width: 62ch; white-space: pre-line; }
+.card .empty-note { color: var(--fg-3); font-size: 15px; }
+.compare { display: flex; align-items: center; gap: 14px; padding: 0; border: 0; background: none; text-align: left; }
+.compare img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; border: 1px solid var(--line-2); flex: none; }
+.compare .c1 { color: var(--fg-2); font-size: 15px; }
+.compare .c2 { color: var(--fg-3); font-size: 14px; }
+.rows { display: grid; gap: 10px; }
+.row { display: flex; justify-content: space-between; gap: 16px; font-size: 16px; }
+.row dt { color: var(--fg-2); flex: none; }
+.row dd { margin: 0; font-weight: 600; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.notes { color: var(--fg-2); white-space: pre-line; font-size: 15px; border-top: 1px solid var(--line); padding-top: 12px; }
+.detail-actions { display: flex; gap: 12px; padding-block: 18px 0; flex-wrap: wrap; }
+
+/* Buttons */
+.btn {
+  min-height: 52px; padding: 0 20px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--card-2);
+  font-weight: 600; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn svg { width: 20px; height: 20px; }
+.btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.btn.green { background: var(--green-bg); color: var(--green); border-color: var(--green-line); }
+.btn.danger { background: var(--red-bg); color: var(--red); border-color: transparent; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.block { width: 100%; }
+
+/* Empty / notices */
+.empty {
+  display: grid; gap: 14px; justify-items: center; text-align: center; padding: 34px 20px; margin-block: 16px;
+  border: 1px dashed var(--line-2); border-radius: var(--r); background: var(--bg-2);
+}
+.empty h2 { font-size: 22px; font-weight: 700; }
+.empty p { color: var(--fg-2); max-width: 40ch; }
+.empty .stage { width: min(220px, 100%); aspect-ratio: 4/3; border-radius: 14px; }
+.notice { padding: 12px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); color: var(--fg-2); font-size: 15px; }
+
+/* Bottom tab bar */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: color-mix(in srgb, var(--bg-2) 92%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+}
+.tabbar nav { max-width: 560px; margin: 0 auto; height: var(--tab-h); display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; }
+.tab {
+  display: grid; justify-items: center; gap: 4px; padding: 8px 0; border: 0; background: none; color: var(--fg-3);
+  font-size: 13px; font-weight: 600; min-height: 60px; align-content: center;
+}
+.tab svg { width: 24px; height: 24px; }
+.tab.on { color: var(--gold); }
+.tab.add { position: relative; }
+.tab.add span.plus {
+  width: 66px; height: 66px; border-radius: 50%; background: var(--gold); color: var(--gold-ink);
+  display: grid; place-items: center; margin-top: -30px; box-shadow: 0 8px 26px rgba(233, 194, 122, .28), 0 0 0 6px var(--bg-2);
+}
+.tab.add span.plus svg { width: 30px; height: 30px; }
+
+/* Sheet (add/edit) */
+.sheet-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.6); }
+.sheet {
+  position: fixed; inset: 0; z-index: 51; overflow-y: auto; background: var(--bg);
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (min-width: 760px) {
+  .sheet { inset: 24px auto 24px 50%; transform: translateX(-50%); width: min(720px, calc(100% - 48px)); border-radius: 22px; border: 1px solid var(--line); }
+}
+.sheet-bar {
+  position: sticky; top: 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 16px; background: color-mix(in srgb, var(--bg) 94%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.sheet-bar h2 { font-size: 18px; font-weight: 700; }
+.sheet-bar .btn { min-height: 46px; }
+.sheet-body { padding: 16px 16px 40px; display: grid; gap: 18px; }
+
+.photo-pick {
+  display: grid; gap: 12px; justify-items: center; text-align: center; padding: 30px 18px; border-radius: var(--r);
+  border: 1.5px dashed var(--line-2); background: var(--bg-2);
+}
+.photo-pick h3 { font-size: 20px; }
+.photo-pick p { color: var(--fg-2); max-width: 36ch; }
+.photo-pick .btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.file-btn { position: relative; overflow: hidden; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+
+.preview { display: grid; gap: 10px; }
+.preview .stage { aspect-ratio: 4 / 3; border-radius: var(--r); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+.seg button { min-height: 44px; border: 0; border-radius: 10px; background: none; color: var(--fg-2); font-weight: 600; font-size: 15px; }
+.seg button.on { background: var(--card-2); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line-2); }
+.seg button:disabled { opacity: .45; cursor: default; }
+.status { display: flex; align-items: center; gap: 10px; color: var(--fg-2); font-size: 15px; min-height: 24px; }
+.status .bar { flex: 1; height: 6px; border-radius: 3px; background: var(--card-2); overflow: hidden; }
+.status .bar i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .2s; }
+.small-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.small-actions .btn { min-height: 44px; font-size: 15px; padding: 0 14px; }
+
+.ai-panel { display: grid; gap: 10px; padding: 14px; border-radius: var(--r); background: var(--card); border: 1px solid var(--line); }
+.ai-panel .why { color: var(--fg-2); font-size: 14px; }
+.ai-panel .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+.dupe { display: grid; gap: 10px; padding: 14px; border-radius: var(--r); background: rgba(233, 194, 122, .08); border: 1px solid rgba(233, 194, 122, .4); }
+.dupe strong { color: var(--gold); font-size: 17px; }
+.dupe-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; }
+.dupe-item { flex: none; width: 112px; display: grid; gap: 4px; text-align: left; padding: 0; border: 0; background: none; }
+.dupe-item .stage { aspect-ratio: 4/3; border-radius: 10px; }
+.dupe-item span { font-size: 12px; color: var(--fg-2); line-height: 1.3; overflow-wrap: anywhere; }
+
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 14px; min-width: 0; }
+legend { padding: 0; margin-bottom: 4px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label { font-size: 15px; font-weight: 600; color: var(--fg-2); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.field input, .field select, .field textarea {
+  width: 100%; min-height: 52px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--card); font-size: 17px; outline: none; min-width: 0;
+}
+.field textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+.field select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a9b0bb' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+.field.ai input, .field.ai textarea { border-color: var(--green-line); background: color-mix(in srgb, var(--card) 88%, #3fa060); }
+.field .tag { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--green); }
+.field .hint { font-size: 13px; color: var(--fg-3); }
+.two { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 520px) { .two { grid-template-columns: 1fr 1fr; } }
+.sheet-foot { display: grid; gap: 10px; }
+
+/* Confirm dialog */
+.dialog {
+  position: fixed; z-index: 61; left: 16px; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  max-width: 460px; margin: 0 auto; padding: 22px; border-radius: 20px; background: var(--card); border: 1px solid var(--line-2);
+  display: grid; gap: 14px;
+}
+.dialog h2 { font-size: 21px; }
+.dialog p { color: var(--fg-2); }
+.dialog .btns { display: grid; gap: 10px; }
+.dialog-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.65); }
+
+.sync-warn {
+  position: fixed; z-index: 80; left: 16px; right: 16px; top: calc(12px + env(safe-area-inset-top, 0px)); max-width: 560px; margin: 0 auto;
+  display: grid; gap: 8px; padding: 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--red); color: var(--fg-2); font-size: 15px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.5);
+}
+.sync-warn strong { color: var(--red); font-size: 16px; }
+.sync-warn .btn { justify-self: start; min-height: 44px; }
+.toast {
+  position: fixed; z-index: 70; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--tab-h) + 24px + env(safe-area-inset-bottom, 0px));
+  padding: 12px 18px; border-radius: 12px; background: var(--fg); color: var(--bg); font-weight: 600; font-size: 15px;
+  max-width: calc(100% - 32px); box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+
+/* Search results list */
+.results { display: grid; gap: 10px; padding-block: 14px; }
+.result { display: grid; grid-template-columns: 112px 1fr; gap: 14px; align-items: center; padding: 8px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); text-align: left; }
+.result .stage { aspect-ratio: 4/3; border-radius: 10px; }
+.result .name { font-weight: 700; font-size: 16px; overflow-wrap: anywhere; }
+.result .sub { font-size: 14px; color: var(--fg-2); }
+.answer { font-size: 22px; font-weight: 700; padding-block: 16px 4px; }
+.answer.yes { color: var(--gold); }
+
+.profile-list { display: grid; gap: 14px; padding-block: 8px; }
+
+/* Kits: stash + wishlist */
+.kit-switch { margin-top: 4px; }
+.kit-switch button { min-height: 50px; font-size: 16px; }
+.kit-grid { display: grid; gap: 12px; padding-block: 14px; }
+@media (min-width: 760px) { .kit-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+.kit-card { display: grid; gap: 12px; padding: 16px; border-radius: var(--r); background: var(--card); border: 1px solid var(--line); min-width: 0; }
+.kit-main { display: grid; gap: 4px; padding: 0; border: 0; background: none; text-align: left; min-width: 0; }
+.kit-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.kit-name { font-weight: 700; font-size: 18px; line-height: 1.3; overflow-wrap: anywhere; }
+.kit-card .sub, .result .sub { color: var(--fg-2); font-size: 15px; overflow-wrap: anywhere; }
+.field-q { font-size: 15px; font-weight: 600; color: var(--fg-2); }
+.pri { flex: none; display: inline-block; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(233, 194, 122, .5); color: var(--gold); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; }
+.kit-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.export-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.export-btns .btn { flex: 1 1 200px; }
+.result.text-only { grid-template-columns: 1fr; padding: 14px 16px; }
+.section-label { padding-top: 22px; }
+.meter { height: 8px; border-radius: 4px; background: var(--card-2); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--gold); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.switch { position: relative; width: 56px; height: 34px; flex: none; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 17px; background: var(--line-2); transition: background .2s; pointer-events: none; }
+.switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 28px; height: 28px; border-radius: 50%; background: var(--fg); transition: transform .2s; }
+.switch input:checked + span { background: var(--gold); }
+.switch input:checked + span::after { transform: translateX(22px); }
+.switch input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div id="app"></div>
+<div id="layer"></div>
+<div id="dlg"></div>
+
+<footer class="tabbar">
+  <nav aria-label="Main">
+    <button class="tab" data-tab="hangar" id="tab-hangar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
+      Hangar
+    </button>
+    <button class="tab" data-tab="search" id="tab-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      Search
+    </button>
+    <button class="tab add" id="tab-add" aria-label="Add a build">
+      <span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+    </button>
+    <button class="tab" data-tab="kits" id="tab-kits">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 8.5L12 4l8.5 4.5v8L12 21l-8.5-4.5z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v8"/></svg>
+      Kits
+    </button>
+    <button class="tab" data-tab="profile" id="tab-profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c1.2-3.6 4-5.4 7.5-5.4s6.3 1.8 7.5 5.4" stroke-linecap="round"/></svg>
+      Profile
+    </button>
+  </nav>
+</footer>
+
+<script>
+"use strict";
+/* The same page runs on claude.ai (as an artifact) and as the installable app (pwa/), where
+   pwa/src/platform.js supplies storage, photos, AI and saving on the device and sets this. */
+const PWA = !!window.hangarPlatform;
+
+/* ---------- constants ---------- */
+const BRANDS = ["Revell", "Airfix", "Tamiya", "Italeri", "Hasegawa", "Eduard", "Academy", "Other"];
+const SCALES = ["1:72", "1:48", "1:32", "1:144", "Other"];
+const FIELDS = ["name", "airForce", "unit", "codes", "markings", "era", "history", "kitBrand", "kitNumber", "scale", "paints", "finishedOn", "notes"];
+const AI_FIELDS = ["name", "airForce", "unit", "codes", "markings", "era", "history"];
+const FIELD_LABELS = { name: "Aircraft", airForce: "Air force", unit: "Squadron", codes: "Codes", markings: "Markings", era: "Era", history: "History" };
+const ORT_VER = "1.21.0";
+const MODEL_CHUNKS = 11;
+const MODEL_BYTES = 44348940;
+const RUNTIME_CHUNKS = 4;
+const RUNTIME_BYTES = 12666427;
+
+/* ---------- state ---------- */
+const S = {
+  db: null, assets: null, assetsChecked: false, sample: null, canImages: false, downloads: null,
+  ready: false, loadError: "",
+  models: [],
+  kits: { stash: [], wishlist: [] },
+  kitTab: "stash",  // which list the Kits tab shows (remembered per device in boot)
+  ksheet: null,     // kit being added/edited
+  view: { name: "hangar" },  // hangar | search | detail{id} | kits | profile
+  filters: { q: "", scale: "", brand: "", airForce: "" },
+  searchQ: "",
+  sheet: null,    // add/edit draft
+  heroShowOriginal: false,
+};
+
+/* ---------- small helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const blobUrl = (id) => (id ? (PWA ? "_blob/" : "/_blob/") + id : "");
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("hangar." + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("hangar." + k, JSON.stringify(v)); } catch {} },
+};
+function toast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+/* A write can resolve on this device without ever reaching the hangar's storage: in the iPhone
+   Claude app, edits showed "Changes saved" and then vanished on reopening. So a change only
+   counts as saved once storage confirms it (a server snapshot with no pending writes that passes
+   `check`). Until then the app says "Saving…", and if storage never confirms, it says so plainly. */
+const SYNC_WAIT_MS = 40000;
+function confirmWrite(ref, check) {
+  return new Promise((resolve) => {
+    let done = false, unsub = null;
+    const finish = (ok) => { if (done) return; done = true; clearTimeout(timer); if (unsub) unsub(); resolve(ok); };
+    const timer = setTimeout(() => finish(false), SYNC_WAIT_MS);
+    try {
+      unsub = ref.onSnapshot((snap) => {
+        if (!snap.metadata.hasPendingWrites && !snap.metadata.fromCache && check(snap)) finish(true);
+      }, () => finish(false));
+    } catch { finish(false); }
+  });
+}
+function trackWrite(ref, check, savedMsg) {
+  toast("Saving…");
+  confirmWrite(ref, check).then((ok) => {
+    if (ok) toast(savedMsg);
+    else showSyncWarning();
+  });
+}
+function showSyncWarning() {
+  if ($("#sync-warn")) return;
+  const el = document.createElement("div");
+  el.id = "sync-warn"; el.className = "sync-warn"; el.setAttribute("role", "alert");
+  el.innerHTML = `<strong>Your last change didn't reach your hangar.</strong>
+    <span>It shows here, but it will be gone when you reopen the app. This happens in the Claude iPhone app. Open My Hangar in Safari (signed in to claude.ai) and make the change there.</span>
+    <button class="btn" type="button">OK</button>`;
+  el.querySelector("button").onclick = () => el.remove();
+  document.body.appendChild(el);
+}
+function newId() { return "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function fmtMonth(d) {
+  if (!d) return "";
+  const m = /^(\d{4})-(\d{2})/.exec(d); if (!m) return d;
+  const names = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
+  return names[+m[2] - 1] + " " + m[1];
+}
+function yearOf(d) { const m = /^(\d{4})/.exec(d || ""); return m ? m[1] : ""; }
+/* "N/A", "none", "-", "?" etc. mean "no kit number"; a real kit number has a digit in it. */
+/* "Add later", "TBD", "-" etc. are placeholders: AI may fill them, and the gallery hides them. */
+const PLACEHOLDER = /^\s*(add later|later|tbd|todo|to do|n\/?a|none|-+|\?+)\s*$/i;
+const isBlank = (v) => !String(v || "").trim() || PLACEHOLDER.test(String(v));
+const realKitNo = (v) => (/\d/.test(String(v || "")) ? String(v).trim() : "");
+function kitLine(m) {
+  const parts = [];
+  if (m.kitBrand) parts.push(m.kitBrand);
+  if (m.scale) parts.push(m.scale);
+  let s = parts.join(" · ");
+  const no = realKitNo(m.kitNumber);
+  if (no) s += (s ? " · " : "") + "#" + no;
+  return s;
+}
+function errCopy(e, what) {
+  const c = e && e.code;
+  if (c === "rate_limited" || c === "resource_exhausted") return "Too many requests just now. Wait a minute and try again.";
+  if (c === "quota_or_state" || c === "quota_exceeded") return "Storage for this hangar is full. Delete a few builds and try again.";
+  if (c === "too_large") return "That photo is too large. Try a smaller one.";
+  if (c === "session_expired" || c === "upstream_auth") return "Your Claude sign-in expired. Reload the page and sign in again.";
+  if (c === "not_granted") return "This page isn't allowed to " + what + ". Check the artifact's Permissions menu.";
+  return "Couldn't " + what + ". Check your connection and try again.";
+}
+
+/* ---------- matching (search + duplicate check) ---------- */
+const STOP = new Set(["mk", "mark", "the", "of", "no", "and", "squadron", "sqn", "kit", "model", "aircraft", "plane", "raf", "usaaf", "usaf", "luftwaffe", "version"]);
+const MAKERS = new Set(["supermarine", "hawker", "messerschmitt", "focke", "wulf", "focke-wulf", "north", "american", "republic", "curtiss", "lockheed", "mitsubishi", "grumman", "boeing", "douglas", "bell", "avro", "bristol", "de", "havilland", "fairey", "junkers", "heinkel", "consolidated", "vought", "nakajima", "kawasaki", "mikoyan", "gurevich", "sukhoi", "dassault", "general", "dynamics", "mcdonnell", "panavia", "saab", "macchi", "fiat", "yakovlev", "lavochkin", "ilyushin", "martin", "northrop", "westland", "gloster", "blackburn", "vickers", "handley", "page", "short", "dornier", "arado", "petlyakov", "tupolev", "aichi", "kawanishi"]);
+const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+function keyTokens(s) {
+  return norm(s).split(" ").filter((t) => t && !STOP.has(t) && !MAKERS.has(t) && !(t.length < 3 && !/\d/.test(t)));
+}
+function haystack(m) {
+  return norm([m.name, m.unit, m.codes, m.airForce, m.markings, m.kitBrand, m.kitNumber, m.scale, m.era, m.paints, m.notes].join(" "));
+}
+function searchModels(q, list) {
+  const terms = norm(q).split(" ").filter(Boolean);
+  if (!terms.length) return list;
+  return list.filter((m) => { const h = haystack(m); return terms.every((t) => h.includes(t)); });
+}
+/* "Do I already have this?": same airframe type, or the same kit number from the same brand.
+   The type is the word that names the airframe: "spitfire" in "Supermarine Spitfire Mk Vb"; for designations
+   with no name ("Bf 109 G-6", "Fw 190 A-8") the first number, "109" / "190". */
+function typeKey(name) {
+  const toks = keyTokens(name);
+  const word = toks.find((t) => /^[a-z]{3,}$/.test(t));
+  if (word) return word;
+  const num = toks.map((t) => (/^\d+/.exec(t) || [""])[0]).find((n) => n.length >= 2);
+  return num || "";
+}
+function findDuplicates(draft, excludeId, list = S.models) {
+  const typeWord = typeKey(draft.name);
+  const kitNo = norm(realKitNo(draft.kitNumber));
+  if (!typeWord && !kitNo) return [];
+  return list.filter((m) => {
+    if (m.id === excludeId) return false;
+    if (kitNo && norm(realKitNo(m.kitNumber)) === kitNo && (!draft.kitBrand || !m.kitBrand || draft.kitBrand === m.kitBrand)) return true;
+    if (typeWord) {
+      const other = typeKey(m.name);
+      if (other === typeWord) return true;
+      if (/^[a-z]/.test(typeWord) && keyTokens(m.name).includes(typeWord)) return true;
+      if (typeWord.length >= 5 && other.length >= 5 && (other.startsWith(typeWord) || typeWord.startsWith(other))) return true;
+    }
+    return false;
+  });
+}
+
+/* ---------- rendering: stage ---------- */
+function stageHTML(m, opts = {}) {
+  const cut = m.displayMode === "cutout" && m.displayAssetId;
+  const src = opts.src || (cut ? blobUrl(m.displayAssetId) : blobUrl(m.originalAssetId));
+  const mode = opts.mode || (cut ? "cutout" : "framed");
+  const img = src ? `<img src="${esc(src)}" alt="${esc(opts.alt ?? m.name ?? "Model")}" loading="lazy" decoding="async">` : `<div class="ph">No photo</div>`;
+  return `<div class="stage ${mode}">${img}</div>`;
+}
+
+/* ---------- rendering: views ---------- */
+function render() {
+  const v = S.view;
+  for (const t of document.querySelectorAll(".tab[data-tab]")) {
+    const on = t.dataset.tab === (v.name === "detail" ? v.from || "hangar" : v.name);
+    t.classList.toggle("on", on);
+    if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
+  }
+  const app = $("#app");
+  let html = "";
+  if (v.name === "hangar") html = viewHangar();
+  else if (v.name === "search") html = viewSearch();
+  else if (v.name === "detail") html = viewDetail();
+  else if (v.name === "kits") html = viewKits();
+  else if (v.name === "profile") html = viewProfile();
+  app.innerHTML = `<div class="wrap">${html}</div>`;
+  bindView();
+}
+
+function notReadyHTML() {
+  if (S.loadError) return `<div class="notice" role="alert">${esc(S.loadError)}</div>`;
+  if (!S.ready) return `<div class="notice">Opening your hangar…</div>`;
+  return "";
+}
+
+function viewHangar() {
+  const f = S.filters;
+  const opts = (vals, cur, all) => `<option value="">${all}</option>` + vals.map((x) => `<option ${x === cur ? "selected" : ""}>${esc(x)}</option>`).join("");
+  const forces = [...new Set(S.models.map((m) => (m.airForce || "").trim()).filter(Boolean))].sort();
+  const brands = [...new Set(BRANDS.concat(S.models.map((m) => m.kitBrand).filter(Boolean)))];
+  const total = S.models.length;
+  return `
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Built &amp; displayed</div>
+        <h1>My Hangar</h1>
+      </div>
+      <div class="count-pill num"><b>${total}</b> ${total === 1 ? "model" : "models"}</div>
+    </div>
+    <label class="search" for="q">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="q" type="search" placeholder="Search name, squadron or kit" value="${esc(f.q)}" autocomplete="off" enterkeyhint="search">
+    </label>
+    <div class="filters">
+      <select id="flt-scale" aria-label="Scale" class="${f.scale ? "on" : ""}">${opts(SCALES, f.scale, "All scales")}</select>
+      <select id="flt-brand" aria-label="Kit brand" class="${f.brand ? "on" : ""}">${opts(brands, f.brand, "All brands")}</select>
+      <select id="flt-af" aria-label="Air force" class="${f.airForce ? "on" : ""}">${opts(forces, f.airForce, "All air forces")}</select>
+    </div>
+    ${PWA && S.ready && total && backupDue() ? `<div class="notice" style="margin-top:12px">${esc(backupAgeText())} Your hangar lives only on this phone. <button class="clear-link" data-act="go-backup">Save a backup</button></div>` : ""}
+    <div id="results">${hangarResultsHTML()}</div>`;
+}
+
+function hangarResultsHTML() {
+  const f = S.filters;
+  let list = searchModels(f.q, S.models);
+  if (f.scale) list = list.filter((m) => m.scale === f.scale);
+  if (f.brand) list = list.filter((m) => m.kitBrand === f.brand);
+  if (f.airForce) list = list.filter((m) => (m.airForce || "").trim() === f.airForce);
+  const filtered = f.q || f.scale || f.brand || f.airForce;
+  const total = S.models.length;
+  let body;
+  if (!S.ready || S.loadError) body = notReadyHTML();
+  else if (!total) body = `
+    <div class="empty">
+      <div class="stage cutout"><div class="ph">Your first build goes here</div></div>
+      <h2>Your display case is empty</h2>
+      <p>Tap the gold + button, take a photo of a finished model, and it goes on a studio stand with the real aircraft's story.</p>
+      <button class="btn primary" data-act="add">Add your first build</button>
+    </div>`;
+  else if (!list.length) body = `<div class="notice">No builds match these filters. <button class="clear-link" data-act="clear">Clear filters</button></div>`;
+  else body = `<div class="grid">${list.map(tileHTML).join("")}</div>`;
+  const summary = filtered && total && list.length
+    ? `<div class="muted num" style="padding-top:6px">Showing ${list.length} of ${total} <button class="clear-link" data-act="clear">Clear search and filters</button></div>` : "";
+  return summary + body;
+}
+
+function tileHTML(m) {
+  return `<button class="tile" data-open="${esc(m.id)}">
+    ${stageHTML(m)}
+    <div class="meta">
+      <div class="name">${esc(m.name || "Untitled build")}</div>
+      <div class="sub">${esc(m.unit || m.airForce || " ")}</div>
+      <div class="scale">${esc([m.scale, m.kitBrand].filter(Boolean).join(" · ") || " ")}</div>
+    </div>
+  </button>`;
+}
+
+function viewSearch() {
+  return `
+    <div class="page-head"><div><div class="eyebrow">Before you buy</div><h1>Do I already have this?</h1></div></div>
+    <label class="search" for="sq">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="sq" type="search" placeholder="Aircraft, squadron, code or kit no." value="${esc(S.searchQ)}" autocomplete="off" enterkeyhint="search">
+    </label>
+    <div id="results">${searchResultsHTML()}</div>`;
+}
+
+function searchResultsHTML() {
+  const q = S.searchQ;
+  let body = "";
+  if (!S.ready || S.loadError) body = notReadyHTML();
+  else if (!q.trim()) body = `<div class="notice">Type an aircraft, mark, squadron, code or kit number. Example: <b>Spitfire</b>, <b>303</b>, <b>RF</b>, or a kit number from the box you're about to buy.</div>`;
+  else {
+    const exact = searchModels(q, S.models);
+    const similar = exact.length ? [] : findDuplicates({ name: q, kitNumber: q, kitBrand: "" }, null);
+    const list = exact.length ? exact : similar;
+    const n = list.length;
+    const answer = exact.length
+      ? `Yes. You've built ${n} ${n === 1 ? "match" : "matches"}.`
+      : similar.length
+        ? `Not that exact one, but you've built ${n} of the same type.`
+        : "No. Nothing in your hangar matches that yet.";
+    body = `<div class="answer ${n ? "yes" : ""}" aria-live="polite">${answer}</div>
+      <div class="results">${list.map((m) => `
+        <button class="result" data-open="${esc(m.id)}">
+          ${stageHTML(m)}
+          <div style="min-width:0">
+            <div class="name">${esc(m.name || "Untitled build")}</div>
+            <div class="sub">${esc([m.unit, m.codes && "Code " + m.codes].filter(Boolean).join(" · "))}</div>
+            <div class="sub">${esc(kitLine(m))}${m.finishedOn ? " · built " + esc(fmtMonth(m.finishedOn)) : ""}</div>
+          </div>
+        </button>`).join("")}</div>`;
+    body += kitSearchHTML(q);
+  }
+  return body;
+}
+
+function viewDetail() {
+  const m = S.models.find((x) => x.id === S.view.id);
+  if (!m) return `<div class="topbar"><button class="circle-btn" data-act="back" aria-label="Back">${ICON.back}</button><div class="t">My Hangar</div><span></span></div>
+    <div class="notice">${S.ready ? "This build isn't in your hangar any more." : "Opening your hangar…"}</div>`;
+  const idx = S.models.indexOf(m) + 1;
+  const hasCut = m.displayMode === "cutout" && m.displayAssetId;
+  const aiPending = (m.aiPending || []).length > 0;
+  const eyebrow = [m.airForce, m.era].filter(Boolean).join(" · ");
+  const chips = [m.scale, m.codes && "Code " + m.codes, m.markings, yearOf(m.finishedOn) && "Built " + yearOf(m.finishedOn)].filter(Boolean);
+  const dots = hasCut ? `<div class="dots" aria-hidden="true"><i class="${!S.heroShowOriginal ? "on" : ""}"></i><i class="${S.heroShowOriginal ? "on" : ""}"></i></div>` : "";
+  const canEdit = !!S.assets;
+  const badge = aiPending ? (canEdit ? `<button class="ai-badge" data-act="edit">✦ AI match · confirm</button>` : `<span class="ai-badge">✦ AI match</span>`) : "";
+  return `
+    <div class="topbar">
+      <button class="circle-btn" data-act="back" aria-label="Back to My Hangar">${ICON.back}</button>
+      <div class="t num">My Hangar · ${idx} of ${S.models.length}</div>
+      ${canEdit ? `<button class="circle-btn" data-act="edit" aria-label="Edit this build">${ICON.more}</button>` : "<span></span>"}
+    </div>
+    <div class="stage hero ${hasCut && !S.heroShowOriginal ? "cutout" : "framed"}">
+      ${hasCut ? `<button class="hero-btn" data-act="flip" aria-label="${S.heroShowOriginal ? "Show display image" : "Show original photo"}">` : ""}
+      ${m.originalAssetId || hasCut ? `<img src="${esc(S.heroShowOriginal || !hasCut ? blobUrl(m.originalAssetId) : blobUrl(m.displayAssetId))}" alt="${esc(m.name || "Model")}">` : `<div class="ph">No photo yet. Tap Edit to add one.</div>`}
+      ${hasCut ? `</button>` : ""}
+      ${badge}${dots}
+    </div>
+    <div class="detail-head">
+      ${eyebrow ? `<div class="eyebrow">${esc(eyebrow)}</div>` : ""}
+      <h1>${esc(m.name || "Untitled build")}</h1>
+      ${m.unit ? `<div class="unit">${esc(m.unit)}</div>` : ""}
+    </div>
+    ${chips.length ? `<div class="chips">${chips.map((c) => `<span class="chip">${esc(c)}</span>`).join("")}</div>` : ""}
+    <div class="cards">
+      <section class="card" aria-labelledby="h-real">
+        <h2 class="label" id="h-real">The real aircraft</h2>
+        ${m.history ? `<p class="story">${esc(m.history)}</p>` : `<p class="empty-note">No history yet.${canEdit ? " Tap Edit to have Claude fill it in, or write it yourself." : ""}</p>`}
+        ${hasCut ? `<button class="compare" data-act="flip">
+          <img src="${esc(S.heroShowOriginal ? blobUrl(m.displayAssetId) : blobUrl(m.originalAssetId))}" alt="">
+          <span><span class="c1" style="display:block">${S.heroShowOriginal ? "Display image · tap to compare" : "Original photo · tap to compare"}</span><span class="c2" style="display:block">Background removed, your paint job untouched</span></span>
+        </button>` : m.originalAssetId ? `<div class="compare"><img src="${esc(blobUrl(m.originalAssetId))}" alt=""><span><span class="c1" style="display:block">Shown as photographed</span><span class="c2" style="display:block">Framed on the display stand</span></span></div>` : ""}
+      </section>
+      <section class="card" aria-labelledby="h-build">
+        <h2 class="label" id="h-build">Your build</h2>
+        <dl class="rows" style="margin:0">
+          <div class="row"><dt>Kit</dt><dd>${esc(kitLine(m) || "—")}</dd></div>
+          <div class="row"><dt>Finished</dt><dd>${esc(fmtMonth(m.finishedOn) || "—")}</dd></div>
+          <div class="row"><dt>Paints</dt><dd>${esc(m.paints || "—")}</dd></div>
+        </dl>
+        ${m.notes ? `<p class="notes">${esc(m.notes)}</p>` : ""}
+      </section>
+    </div>
+    ${canEdit ? `<div class="detail-actions">
+      <button class="btn" data-act="edit">${ICON.edit} Edit build</button>
+      <button class="btn danger" data-act="delete">${ICON.trash} Delete</button>
+    </div>` : ""}`;
+}
+
+function viewProfile() {
+  const auto = store.get("autoCutout", true);
+  const total = S.models.length;
+  const scales = {};
+  for (const m of S.models) if (m.scale) scales[m.scale] = (scales[m.scale] || 0) + 1;
+  const scaleLine = Object.entries(scales).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}: ${n}`).join(" · ");
+  return `<div class="page-head"><div><div class="eyebrow">Settings</div><h1>Profile</h1></div></div>
+    <div class="profile-list">
+      <section class="card">
+        <h2 class="label">Your collection</h2>
+        <dl class="rows" style="margin:0">
+          <div class="row"><dt>Models built</dt><dd class="num">${total}</dd></div>
+          <div class="row"><dt>Kits in stash</dt><dd class="num">${S.kits.stash.length}</dd></div>
+          <div class="row"><dt>Kits on wishlist</dt><dd class="num">${S.kits.wishlist.length}</dd></div>
+          ${scaleLine ? `<div class="row"><dt>By scale</dt><dd class="num">${esc(scaleLine)}</dd></div>` : ""}
+        </dl>
+      </section>
+      <section class="card">
+        <h2 class="label">Photos</h2>
+        <div class="toggle-row">
+          <div><div style="font-weight:600">Remove background automatically</div><div class="muted" style="font-size:14px">Cuts the model out of your photo on this device. Nothing is redrawn. Turn off on older phones if it's slow.</div></div>
+          <label class="switch"><input type="checkbox" id="auto-cut" ${auto ? "checked" : ""} aria-label="Remove background automatically"><span></span></label>
+        </div>
+        <div id="usage" class="muted" style="font-size:14px">${S.assets ? "Checking storage…" : "Storage details appear when you can edit this hangar."}</div>
+      </section>
+      ${deviceCardsHTML()}
+      <section class="card">
+        <h2 class="label">Export</h2>
+        <div id="export-box">${exportCardHTML()}</div>
+      </section>
+      <section class="card">
+        <h2 class="label">About</h2>
+        <p class="muted">${PWA ? "My Hangar. Your builds are saved on this device only; keep a backup. Photos stay as you took them; the display image only removes the background."
+          : "My Hangar. Your builds are saved with this page on your Claude account. Photos stay as you took them; the display image only removes the background."}</p>
+      </section>
+    </div>`;
+}
+
+const ICON = {
+  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>`,
+  more: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`,
+  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg>`,
+  camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`,
+  image: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>`,
+  box: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 8.5L12 4l8.5 4.5v8L12 21l-8.5-4.5z"/><path d="M3.5 8.5L12 13l8.5-4.5M12 13v8"/></svg>`,
+  sheet: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 9h16M4 14.5h16M10 9v11.5"/></svg>`,
+  book: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 4.5h10.5a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3z"/><path d="M5 16.5a3 3 0 0 1 3-3h10.5"/></svg>`,
+  spark: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l1.9 6.1 6.1 1.9-6.1 1.9L12 18.5l-1.9-6.1L4 10.5l6.1-1.9z"/></svg>`,
+};
+
+function bindActions(root) {
+  root.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openDetail(b.dataset.open)));
+  root.querySelectorAll("[data-kit]").forEach((b) => b.addEventListener("click", () => { const f = findKit(b.dataset.kit); if (f) openKit(f.kind, f.k); }));
+  root.querySelectorAll("[data-built]").forEach((b) => b.addEventListener("click", () => { const f = findKit(b.dataset.built); if (f) builtKit(f.kind, f.k); }));
+  root.querySelectorAll("[data-bought]").forEach((b) => b.addEventListener("click", () => { const w = S.kits.wishlist.find((x) => x.id === b.dataset.bought); if (w) boughtKit(w); }));
+  for (const kind of ["stash", "wishlist"]) {
+    const b = root.querySelector("#kt-" + kind);
+    if (b) b.addEventListener("click", () => { S.kitTab = kind; store.set("kitTab", kind); render(); });
+  }
+  root.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => act(b.dataset.act)));
+}
+/* Re-render only the results under a search box, so the box (and the phone keyboard) stays put. */
+function refreshResults() {
+  const box = $("#results");
+  if (!box) return render();
+  box.innerHTML = S.view.name === "search" ? searchResultsHTML() : hangarResultsHTML();
+  bindActions(box);
+}
+function bindView() {
+  const app = $("#app");
+  bindActions(app);
+  const q = $("#q", app);
+  if (q) q.addEventListener("input", () => { S.filters.q = q.value; refreshResults(); });
+  const sq = $("#sq", app);
+  if (sq) sq.addEventListener("input", () => { S.searchQ = sq.value; refreshResults(); });
+  [["flt-scale", "scale"], ["flt-brand", "brand"], ["flt-af", "airForce"]].forEach(([id, k]) => {
+    const el = $("#" + id, app);
+    if (el) el.addEventListener("change", () => { S.filters[k] = el.value; render(); });
+  });
+  bindExport();
+  bindDeviceCards();
+  const ac = $("#auto-cut", app);
+  if (ac) ac.addEventListener("change", () => store.set("autoCutout", ac.checked));
+  if (S.view.name === "profile" && S.assets) {
+    S.assets.list().then(({ usage }) => {
+      const el = $("#usage"); if (!el) return;
+      const mb = (b) => (b / 1048576).toFixed(b > 1e8 ? 0 : 1);
+      const pct = Math.min(100, (usage.bytes / usage.maxBytes) * 100);
+      el.innerHTML = `<div class="row" style="font-size:14px"><span>Photo storage</span><span class="num">${mb(usage.bytes)} MB of ${mb(usage.maxBytes)} MB</span></div><div class="meter" style="margin-top:6px"><i style="width:${pct.toFixed(1)}%"></i></div>`;
+    }).catch(() => { const el = $("#usage"); if (el) el.textContent = "Storage details aren't available right now."; });
+  }
+}
+
+function go(name, extra = {}) {
+  S.view = { name, ...extra };
+  S.heroShowOriginal = false;
+  render();
+  window.scrollTo(0, 0);
+}
+function openDetail(id) { go("detail", { id, from: S.view.name === "search" ? "search" : "hangar" }); }
+
+function act(a) {
+  if (a === "add") return openSheet(null);
+  if (a === "kit-add") return openKit(S.kitTab, null);
+  if (a === "go-backup") { go("profile"); setTimeout(() => $("#bk-save")?.scrollIntoView({ block: "center" }), 50); return; }
+  if (a === "clear") { S.filters = { q: "", scale: "", brand: "", airForce: "" }; return render(); }
+  if (a === "back") return go(S.view.from || "hangar");
+  if (a === "flip") { S.heroShowOriginal = !S.heroShowOriginal; return render(); }
+  if (a === "edit") { const m = S.models.find((x) => x.id === S.view.id); if (m) openSheet(m); return; }
+  if (a === "delete") { const m = S.models.find((x) => x.id === S.view.id); if (m) confirmDelete(m); return; }
+}
+
+document.querySelectorAll(".tab[data-tab]").forEach((t) => t.addEventListener("click", () => {
+  go(t.dataset.tab);
+  if (t.dataset.tab === "search") setTimeout(() => { const s = $("#sq"); if (s) s.focus(); }, 30);
+}));
+$("#tab-add").addEventListener("click", () => openSheet(null));
+
+/* ---------- add / edit sheet ----------
+   The sheet is built once when it opens. After that, only the part that changed is redrawn
+   (photo, AI panel, duplicate box, save buttons), so text fields are never replaced while
+   someone is typing. Replacing a focused field closes the iPhone keyboard. */
+function emptyDraft() {
+  const d = {}; for (const f of FIELDS) d[f] = "";
+  return d;
+}
+function openSheet(model, opts = {}) {
+  if (!S.db || !S.assetsChecked) { toast("Your hangar is still opening. Try again in a moment."); return; }
+  if (!S.assets) { toast("Only the hangar's owner can add or edit builds."); return; }
+  const d = emptyDraft();
+  if (model) for (const f of FIELDS) d[f] = model[f] ?? "";
+  const pre = Object.entries(opts.prefill || {}).filter(([, v]) => v);
+  for (const [k, v] of pre) d[k] = v;
+  S.sheet = {
+    fromKit: opts.fromKit || null,     // {kind, id}: stash/wishlist kit to clear once this build is saved
+    id: model ? model.id : null,
+    existing: model || null,
+    draft: d,
+    touched: new Set(pre.map(([k]) => k)), // fields typed (or brought from a kit); AI never overwrites them
+    aiPending: new Set(model?.aiPending || []),
+    aiInfo: model?.ai || null,
+    origBlob: null, origUrl: model ? blobUrl(model.originalAssetId) : "",
+    cutBlob: null, cutUrl: model && model.displayAssetId ? blobUrl(model.displayAssetId) : "",
+    displayMode: model ? model.displayMode || "framed" : "framed",
+    photoGen: 0,                   // bumps on every new photo; stale cut-outs are dropped
+    cutStatus: "", cutProgress: 0, cutBusy: false,
+    aiStatus: "", aiBusy: false, aiCtl: null,
+    aiAlt: {},                     // Claude's differing values for fields the builder typed
+    saving: false,
+  };
+  buildSheet();
+}
+function sheetDirty(sh) {
+  const was = sh.existing;
+  return sh.touched.size > 0 || !!sh.origBlob || !!sh.cutBlob
+    || sh.aiInfo !== (was?.ai || null)
+    || sh.displayMode !== (was ? was.displayMode || "framed" : "framed")
+    || [...sh.aiPending].sort().join() !== [...(was?.aiPending || [])].sort().join();
+}
+function requestCloseSheet() {
+  const sh = S.sheet; if (!sh || sh.saving) return;
+  if (!sheetDirty(sh)) return closeSheet();
+  showDialog({
+    title: sh.existing ? "Discard your changes?" : "Discard this build?",
+    body: sh.existing ? "Your edits to this build won't be saved." : "The photo and details you entered won't be saved.",
+    yes: "Discard", no: "Keep editing",
+    onYes: closeSheet,
+  });
+}
+function closeSheet() {
+  const sh = S.sheet; if (!sh) return;
+  if (sh.aiCtl) sh.aiCtl.abort();
+  if (sh.origBlob) URL.revokeObjectURL(sh.origUrl);
+  if (sh.cutBlob) URL.revokeObjectURL(sh.cutUrl);
+  S.sheet = null;
+  $("#layer").innerHTML = "";
+  document.body.style.overflow = "";
+  render(); // catch up on anything that changed while the sheet was open
+}
+
+function fieldHTML(sh, f, label, attrs = "") {
+  const ai = sh.aiPending.has(f);
+  const long = f === "history" || f === "notes";
+  const ctl = long
+    ? `<textarea id="f-${f}" data-f="${f}" rows="${f === "history" ? 4 : 3}">${esc(sh.draft[f])}</textarea>`
+    : `<input id="f-${f}" data-f="${f}" value="${esc(sh.draft[f])}" enterkeyhint="done" ${attrs}>`;
+  return `<div class="field ${ai ? "ai" : ""}" id="fw-${f}"><label for="f-${f}">${label} <span class="tag" ${ai ? "" : "hidden"}>AI match</span></label>${ctl}</div>`;
+}
+function selectHTML(sh, f, label, list) {
+  const v = sh.draft[f];
+  const vals = list.includes(v) || !v ? list : list.concat(v);
+  return `<div class="field" id="fw-${f}"><label for="f-${f}">${label}</label><select id="f-${f}" data-f="${f}"><option value="">Choose…</option>${vals.map((x) => `<option ${x === v ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></div>`;
+}
+
+function buildSheet() {
+  const sh = S.sheet;
+  $("#layer").innerHTML = `
+    <div class="sheet-backdrop"></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="sheet-bar">
+        <button type="button" class="btn" id="sh-cancel">Cancel</button>
+        <h2 id="sheet-title">${sh.existing ? "Edit build" : sh.fromKit ? "You built it!" : "Add a build"}</h2>
+        <button type="button" class="btn primary" id="sh-save">Save</button>
+      </div>
+      <form class="sheet-body" id="sheet-form" novalidate>
+        <div id="sh-photo"></div>
+        <div id="sh-ai"></div>
+        <fieldset>
+          <legend class="label">The aircraft</legend>
+          ${fieldHTML(sh, "name", "Aircraft and mark", 'placeholder="e.g. Supermarine Spitfire Mk Vb" autocomplete="off"')}
+          <div id="sh-dupe"></div>
+          <div class="two">
+            ${fieldHTML(sh, "airForce", "Air force", 'placeholder="e.g. Royal Air Force"')}
+            ${fieldHTML(sh, "era", "Era or year", 'placeholder="e.g. 1944"')}
+          </div>
+          ${fieldHTML(sh, "unit", "Squadron or unit", 'placeholder="e.g. No. 303 Squadron"')}
+          <div class="two">
+            ${fieldHTML(sh, "codes", "Codes on the model", 'placeholder="e.g. RF"')}
+            ${fieldHTML(sh, "markings", "Special markings", 'placeholder="e.g. Invasion stripes"')}
+          </div>
+          ${fieldHTML(sh, "history", "History of the real aircraft")}
+        </fieldset>
+        <fieldset>
+          <legend class="label">Your build</legend>
+          <div class="two">
+            ${selectHTML(sh, "kitBrand", "Kit brand", BRANDS)}
+            ${selectHTML(sh, "scale", "Scale", SCALES)}
+          </div>
+          <div class="two">
+            ${fieldHTML(sh, "kitNumber", "Kit number (optional)", 'placeholder="e.g. 03897" autocomplete="off"')}
+            ${fieldHTML(sh, "finishedOn", "Date finished", 'type="date"')}
+          </div>
+          ${fieldHTML(sh, "paints", "Paints used", 'placeholder="e.g. Dark Green, Ocean Grey"')}
+          ${fieldHTML(sh, "notes", "Notes")}
+        </fieldset>
+        <div class="sheet-foot">
+          <button type="submit" class="btn primary block" id="sh-save2">Save</button>
+          <p class="muted" id="sh-hint" style="text-align:center;font-size:14px"></p>
+        </div>
+      </form>
+    </div>`;
+  document.body.style.overflow = "hidden";
+  $("#sh-cancel").onclick = requestCloseSheet;
+  $("#sh-save").onclick = saveSheet;
+  $("#sheet-form").onsubmit = (e) => {
+    e.preventDefault();
+    if (e.submitter && e.submitter.id === "sh-save2") saveSheet();
+    else if (document.activeElement) document.activeElement.blur(); // Return on the keyboard just closes it
+  };
+  let dupeTimer = null;
+  $("#layer").querySelectorAll("[data-f]").forEach((el) => {
+    const f = el.dataset.f;
+    const evt = el.tagName === "SELECT" || el.type === "date" ? "change" : "input";
+    el.addEventListener(evt, () => {
+      sh.draft[f] = el.value;
+      sh.touched.add(f);
+      if (sh.aiPending.has(f) || f in sh.aiAlt) { sh.aiPending.delete(f); delete sh.aiAlt[f]; markField(f, false); updateAI(); }
+      if (f === "name" || f === "kitNumber" || f === "kitBrand") { clearTimeout(dupeTimer); dupeTimer = setTimeout(updateDupes, 300); }
+    });
+  });
+  updatePhoto(); updateAI(); updateDupes(); updateSave();
+}
+
+function markField(f, on) {
+  const w = document.getElementById("fw-" + f); if (!w) return;
+  w.classList.toggle("ai", on);
+  const t = w.querySelector(".tag"); if (t) t.hidden = !on;
+}
+function setField(f, v, ai) {
+  const sh = S.sheet;
+  sh.draft[f] = v;
+  const el = document.getElementById("f-" + f); if (el) el.value = v;
+  if (ai) sh.aiPending.add(f); else sh.aiPending.delete(f);
+  markField(f, ai);
+}
+
+function cutStatusHTML(sh) {
+  return sh.cutBusy
+    ? `<span>${esc(sh.cutStatus)}</span><span class="bar"><i style="width:${Math.round(sh.cutProgress * 100)}%"></i></span>`
+    : esc(sh.cutStatus);
+}
+function updatePhoto() {
+  const sh = S.sheet; const box = $("#sh-photo"); if (!sh || !box) return;
+  const showCut = sh.displayMode === "cutout" && sh.cutUrl;
+  box.innerHTML = sh.origUrl ? `
+    <div class="preview">
+      ${stageHTML({}, { src: showCut ? sh.cutUrl : sh.origUrl, mode: showCut ? "cutout" : "framed", alt: "Display preview" })}
+      <div class="seg" role="group" aria-label="Display style">
+        <button type="button" id="mode-cut" class="${showCut ? "on" : ""}" ${sh.cutUrl ? "" : "disabled"}>Cut-out</button>
+        <button type="button" id="mode-framed" class="${showCut ? "" : "on"}">Original photo</button>
+      </div>
+      <div class="status" id="cut-status" aria-live="polite">${cutStatusHTML(sh)}</div>
+      ${sh.cutBusy ? "" : `<div class="small-actions">
+        ${!sh.cutUrl ? `<button type="button" class="btn" id="do-cut">Remove background</button>` : ""}
+        <label class="btn file-btn">${ICON.camera} Replace photo<input type="file" accept="image/*" id="file-replace" aria-label="Replace photo"></label>
+      </div>`}
+    </div>` : `
+    <div class="photo-pick">
+      ${ICON.camera.replace("<svg", '<svg width="40" height="40" style="color:var(--gold)"')}
+      <h3>Photograph your finished model</h3>
+      <p>Any background is fine. Get the whole model in frame, with the markings visible.</p>
+      <div class="btns">
+        <label class="btn primary file-btn">${ICON.camera} Take photo<input type="file" accept="image/*" capture="environment" id="file-cam" aria-label="Take photo"></label>
+        <label class="btn file-btn">${ICON.image} Choose photo<input type="file" accept="image/*" id="file-lib" aria-label="Choose photo"></label>
+      </div>
+      <div class="status" id="cut-status" aria-live="polite">${cutStatusHTML(sh)}</div>
+    </div>`;
+  for (const id of ["file-cam", "file-lib", "file-replace"]) {
+    const el = document.getElementById(id);
+    if (el) el.onchange = () => { const f = el.files && el.files[0]; el.value = ""; if (f) takePhoto(f); };
+  }
+  const mc = $("#mode-cut"); if (mc) mc.onclick = () => { sh.displayMode = "cutout"; updatePhoto(); };
+  const mf = $("#mode-framed"); if (mf) mf.onclick = () => { sh.displayMode = "framed"; updatePhoto(); };
+  const dc = $("#do-cut"); if (dc) dc.onclick = runCutout;
+}
+function updateCutProgress() {
+  const sh = S.sheet; const st = $("#cut-status"); if (sh && st) st.innerHTML = cutStatusHTML(sh);
+}
+
+/* Photo identification needs a view that can send images to Claude. Where it can't,
+   Claude can still fill in the story from the details typed in. */
+function aiMode() {
+  if (!S.sample) return "";
+  return S.canImages ? "photo" : "text";
+}
+function updateAI() {
+  const sh = S.sheet; const box = $("#sh-ai"); if (!sh || !box) return;
+  const mode = aiMode();
+  if (!mode && !sh.aiStatus) {
+    box.innerHTML = PWA ? `<div class="ai-panel"><span class="label">Identify the aircraft</span><div class="why">Add your Anthropic API key in Profile → AI identification, and Claude can identify the aircraft from your photo.</div></div>` : "";
+    return;
+  }
+  const ready = mode === "photo" ? !!sh.origUrl : !!sh.draft.name.trim();
+  const label = mode === "photo" ? (sh.aiInfo ? "Identify again" : "Identify with AI") : "Fill in with AI";
+  const intro = mode === "text"
+    ? "Photo identification isn't available in this view. Claude can still fill in the empty fields and the history from the aircraft name you type."
+    : (sh.origUrl ? "" : "Add a photo first, then Claude can identify the aircraft from its markings.");
+  box.innerHTML = `
+    <div class="ai-panel">
+      <div class="head">
+        ${sh.aiPending.size ? `<span class="ai-badge">✦ AI match · confirm</span>` : `<span class="label">${mode === "text" ? "Real aircraft details" : "Identify the aircraft"}</span>`}
+        ${mode ? (sh.aiBusy ? `<button type="button" class="btn" id="ai-stop">Stop</button>` : `<button type="button" class="btn green" id="ai-go" ${ready ? "" : "disabled"}>${ICON.spark} ${label}</button>`) : ""}
+      </div>
+      ${intro && !sh.aiStatus ? `<div class="why">${esc(intro)}</div>` : ""}
+      ${sh.aiStatus ? `<div class="why" aria-live="polite">${esc(sh.aiStatus)}</div>` : ""}
+      ${Object.keys(sh.aiAlt).length ? `<div class="why">You typed something different from Claude here, so your version was kept. Claude suggests:</div>
+        <dl class="rows" style="margin:0">${Object.entries(sh.aiAlt).map(([f, v]) => `<div class="row"><dt>${esc(FIELD_LABELS[f])}</dt><dd>${esc(v.length > 90 ? v.slice(0, 90) + "…" : v)}</dd></div>`).join("")}</dl>
+        <button type="button" class="btn" id="ai-alt">Use Claude's version</button>` : ""}
+      ${sh.aiPending.size ? `<div class="why">Green fields are Claude's suggestions. Edit any that are wrong, or confirm them all.</div><button type="button" class="btn" id="ai-confirm">Confirm all suggestions</button>` : ""}
+    </div>`;
+  const ag = $("#ai-go"); if (ag) ag.onclick = runIdentify;
+  const as = $("#ai-stop"); if (as) as.onclick = () => sh.aiCtl?.abort();
+  const aa = $("#ai-alt"); if (aa) aa.onclick = () => {
+    for (const [f, v] of Object.entries(sh.aiAlt)) { setField(f, v, true); sh.touched.delete(f); }
+    sh.aiAlt = {}; updateAI(); updateDupes();
+  };
+  const ac = $("#ai-confirm"); if (ac) ac.onclick = () => {
+    for (const f of [...sh.aiPending]) markField(f, false);
+    sh.aiPending.clear(); sh.aiStatus = "Suggestions confirmed."; updateAI();
+  };
+  // the "Fill in with AI" button depends on the name field
+  if (mode === "text") {
+    const name = $("#f-name");
+    if (name && !name.dataset.aiWatch) { name.dataset.aiWatch = "1"; name.addEventListener("input", () => { const b = $("#ai-go"); if (b) b.disabled = !name.value.trim(); }); }
+  }
+}
+
+function updateDupes() {
+  const sh = S.sheet; const box = $("#sh-dupe"); if (!sh || !box) return;
+  const dupes = findDuplicates(sh.draft, sh.id);
+  box.innerHTML = dupes.length ? `
+    <div class="dupe" aria-live="polite">
+      <strong>You've built ${dupes.length} of these</strong>
+      <div class="dupe-list">${dupes.slice(0, 12).map((m) => `<div class="dupe-item">${stageHTML(m)}<span>${esc(m.name)}${m.unit ? " · " + esc(m.unit) : ""}${m.scale ? " · " + esc(m.scale) : ""}</span></div>`).join("")}</div>
+    </div>` : "";
+}
+
+function updateSave() {
+  const sh = S.sheet; if (!sh) return;
+  const can = !!sh.origUrl && !sh.saving && !sh.cutBusy;
+  const text = sh.saving ? "Saving…" : sh.existing ? "Save changes" : "Save to My Hangar";
+  for (const id of ["sh-save", "sh-save2"]) { const b = document.getElementById(id); if (b) { b.disabled = !can; b.textContent = id === "sh-save" ? (sh.saving ? "Saving…" : "Save") : text; } }
+  const c = $("#sh-cancel"); if (c) c.disabled = sh.saving;
+  const hint = $("#sh-hint");
+  if (hint) hint.textContent = !sh.origUrl ? "Add a photo to save this build." : sh.cutBusy ? "Saving unlocks when the background removal finishes." : "";
+}
+
+/* ---------- photo pipeline ---------- */
+function loadImage(src) {
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("decode")); i.src = src; });
+}
+function canvasBlob(c, type, q) { return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("encode"))), type, q)); }
+
+async function normalizePhoto(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await loadImage(url);
+    const max = 2000;
+    const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.round(img.naturalWidth * s), h = Math.round(img.naturalHeight * s);
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    c.getContext("2d").drawImage(img, 0, 0, w, h);
+    return await canvasBlob(c, "image/jpeg", 0.9);
+  } finally { URL.revokeObjectURL(url); }
+}
+
+async function takePhoto(file) {
+  const sh = S.sheet; if (!sh || sh.cutBusy) return;
+  sh.cutStatus = "Preparing photo…"; updateCutProgress();
+  let blob;
+  try { blob = await normalizePhoto(file); }
+  catch { if (S.sheet === sh) { sh.cutStatus = "That file couldn't be opened as a photo. Try a JPEG or PNG."; updateCutProgress(); } return; }
+  if (S.sheet !== sh) return;
+  if (sh.origBlob) URL.revokeObjectURL(sh.origUrl);
+  if (sh.cutBlob) URL.revokeObjectURL(sh.cutUrl);
+  sh.photoGen++;
+  sh.origBlob = blob; sh.origUrl = URL.createObjectURL(blob);
+  sh.cutBlob = null; sh.cutUrl = ""; sh.displayMode = "framed";
+  sh.cutStatus = ""; sh.aiInfo = null; sh.aiStatus = ""; sh.aiAlt = {};
+  updatePhoto(); updateAI(); updateSave();
+  if (store.get("autoCutout", true)) runCutout();
+}
+
+/* Background removal: ISNet (quantised) running in onnxruntime-web WASM, on this device.
+   Files are published next to the page: bg/m00.wasm… (model) and bg/r00.wasm… (onnxruntime 1.21.0 WASM binary), in 4 MB chunks. */
+let bgLoading = null;   // Promise<{ort, session}>, shared by every cut-out
+let bgProgress = null;  // progress callback of the cut-out currently waiting
+function loadBg(onProgress) {
+  bgProgress = onProgress;
+  if (!bgLoading) bgLoading = loadBgOnce().catch((e) => { bgLoading = null; throw e; });
+  return bgLoading;
+}
+async function loadBgOnce() {
+  let ort;
+  const ortUrl = PWA ? new URL("vendor/ort.wasm.bundle.min.mjs", document.baseURI).href : `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VER}/dist/ort.wasm.bundle.min.mjs`;
+  try { ort = await import(ortUrl); ort = ort.default || ort; }
+  catch (e) { throw new Error("runtime-blocked"); }
+  ort.env.wasm.numThreads = 1;
+  ort.env.wasm.proxy = false;
+  let done = 0;
+  const total = MODEL_BYTES + RUNTIME_BYTES;
+  const fetchChunks = async (prefix, count, size) => {
+    const parts = await Promise.all(Array.from({ length: count }, async (_, i) => {
+      const r = await fetch(new URL(`bg/${prefix}${String(i).padStart(2, "0")}.wasm`, document.baseURI));
+      if (!r.ok) throw new Error("model-missing");
+      const b = await r.arrayBuffer();
+      done += b.byteLength; bgProgress && bgProgress(done / total);
+      return b;
+    }));
+    const out = new Uint8Array(size);
+    let off = 0; for (const p of parts) { out.set(new Uint8Array(p), off); off += p.byteLength; }
+    if (off !== size) throw new Error("model-size");
+    return out;
+  };
+  const [runtime, model] = await Promise.all([fetchChunks("r", RUNTIME_CHUNKS, RUNTIME_BYTES), fetchChunks("m", MODEL_CHUNKS, MODEL_BYTES)]);
+  ort.env.wasm.wasmBinary = runtime.buffer;
+  const session = await ort.InferenceSession.create(model, { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
+  return { ort, session };
+}
+
+async function cutoutBlob(srcBlob, onProgress) {
+  const { ort, session } = await loadBg((p) => onProgress && onProgress("Downloading the cut-out tool (first time only)…", p * 0.9));
+  onProgress && onProgress("Removing background…", 0.93);
+  await new Promise((r) => setTimeout(r, 40));
+  const url = URL.createObjectURL(srcBlob);
+  const img = await loadImage(url).finally(() => URL.revokeObjectURL(url));
+  const W = img.naturalWidth, H = img.naturalHeight, R = 1024;
+  // model input: 1024x1024 stretched, (v-128)/256, NCHW
+  const c = document.createElement("canvas"); c.width = R; c.height = R;
+  const cx = c.getContext("2d", { willReadFrequently: true });
+  cx.drawImage(img, 0, 0, R, R);
+  const px = cx.getImageData(0, 0, R, R).data;
+  const n = R * R, input = new Float32Array(3 * n);
+  for (let i = 0, j = 0; j < n; i += 4, j++) {
+    input[j] = (px[i] - 128) / 256; input[j + n] = (px[i + 1] - 128) / 256; input[j + 2 * n] = (px[i + 2] - 128) / 256;
+  }
+  const out = await session.run({ input: new ort.Tensor("float32", input, [1, 3, R, R]) });
+  const mask = out.output || out[session.outputNames[0]];
+  const md = mask.data;
+  // mask -> canvas alpha, then scale to the photo size
+  const mc = document.createElement("canvas"); mc.width = R; mc.height = R;
+  const mctx = mc.getContext("2d");
+  const mImg = mctx.createImageData(R, R);
+  let cover = 0;
+  for (let j = 0, i = 0; j < n; j++, i += 4) {
+    const a = Math.max(0, Math.min(255, Math.round(md[j] * 255)));
+    mImg.data[i] = mImg.data[i + 1] = mImg.data[i + 2] = 0; mImg.data[i + 3] = a;
+    if (a > 127) cover++;
+  }
+  mctx.putImageData(mImg, 0, 0);
+  const coverage = cover / n;
+  if (coverage < 0.01 || coverage > 0.97) throw new Error("no-subject");
+  // full-size: photo pixels, masked by alpha (destination-in keeps the photo's own pixels untouched)
+  const fc = document.createElement("canvas"); fc.width = W; fc.height = H;
+  const fx = fc.getContext("2d", { willReadFrequently: true });
+  fx.drawImage(img, 0, 0, W, H);
+  fx.globalCompositeOperation = "destination-in";
+  fx.imageSmoothingEnabled = true; fx.imageSmoothingQuality = "high";
+  fx.drawImage(mc, 0, 0, W, H);
+  fx.globalCompositeOperation = "source-over";
+  // trim to the subject with a margin
+  const ad = fx.getImageData(0, 0, W, H).data;
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) {
+    if (ad[(y * W + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0) throw new Error("no-subject");
+  const pad = Math.round(Math.max(x1 - x0, y1 - y0) * 0.03);
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(W - 1, x1 + pad); y1 = Math.min(H - 1, y1 + pad);
+  const tw = x1 - x0 + 1, th = y1 - y0 + 1;
+  const tc = document.createElement("canvas"); tc.width = tw; tc.height = th;
+  tc.getContext("2d").drawImage(fc, x0, y0, tw, th, 0, 0, tw, th);
+  onProgress && onProgress("Removing background…", 1);
+  return await canvasBlob(tc, "image/png");
+}
+
+async function sourceBlobForSheet(sh) {
+  if (sh.origBlob) return sh.origBlob;
+  if (sh.existing && sh.existing.originalAssetId) { const r = await fetch(blobUrl(sh.existing.originalAssetId)); if (!r.ok) throw new Error("fetch"); return await r.blob(); }
+  throw new Error("no-photo");
+}
+
+async function runCutout() {
+  const sh = S.sheet; if (!sh || sh.cutBusy) return;
+  const gen = sh.photoGen;
+  sh.cutBusy = true; sh.cutProgress = 0.02; sh.cutStatus = "Starting…";
+  updatePhoto(); updateSave();
+  let last = 0;
+  try {
+    const src = await sourceBlobForSheet(sh);
+    const blob = await cutoutBlob(src, (msg, p) => {
+      if (S.sheet !== sh) return;
+      sh.cutStatus = msg; sh.cutProgress = p;
+      const now = Date.now(); if (now - last > 150 || p >= 0.9) { last = now; updateCutProgress(); }
+    });
+    if (S.sheet !== sh || sh.photoGen !== gen) return;
+    if (sh.cutBlob) URL.revokeObjectURL(sh.cutUrl);
+    sh.cutBlob = blob; sh.cutUrl = URL.createObjectURL(blob); sh.displayMode = "cutout";
+    sh.cutStatus = "Background removed. Your paint job is untouched.";
+  } catch (e) {
+    if (S.sheet !== sh || sh.photoGen !== gen) return;
+    const m = String(e && e.message || e);
+    sh.cutStatus = m === "no-subject"
+      ? "Couldn't find the model's outline in this photo, so it's shown as photographed."
+      : m === "runtime-blocked" || m === "model-missing"
+        ? "Background removal isn't available here, so the photo is shown as taken."
+        : "Background removal didn't work on this device, so the photo is shown as taken.";
+    sh.displayMode = "framed";
+    console.warn("cutout failed", e);
+  } finally {
+    if (S.sheet === sh) { sh.cutBusy = false; updatePhoto(); updateSave(); }
+  }
+}
+
+/* ---------- AI identify ---------- */
+const AI_SHAPE = `Reply with only one JSON object, no other text, in exactly this shape:
+{"name": "manufacturer, type and mark, e.g. Supermarine Spitfire Mk Vb",
+ "airForce": "e.g. Royal Air Force",
+ "unit": "most likely squadron or unit, or empty string if you cannot tell",
+ "codes": "unit/individual codes, e.g. RF-D, or empty string",
+ "markings": "short label for notable special markings, e.g. Invasion stripes, or empty string",
+ "era": "year or short range the markings represent, e.g. 1944",
+ "confidence": "high" | "medium" | "low",
+ "evidence": "one sentence naming what supports the identification",
+ "history": "2 to 3 plain sentences about the real aircraft type and, if known, the unit and the period these markings represent. State facts only; if unsure, keep it general."}`;
+
+async function runIdentify() {
+  const sh = S.sheet; const mode = aiMode();
+  if (!sh || sh.aiBusy || !mode) return;
+  const d = sh.draft;
+  if (mode === "text" && !d.name.trim()) { sh.aiStatus = "Type the aircraft name first."; updateAI(); return; }
+  sh.aiBusy = true; sh.aiStatus = "Thinking… this usually takes 10 to 40 seconds."; sh.aiCtl = new AbortController();
+  updateAI();
+  const known = Object.entries({ name: d.name, airForce: d.airForce, unit: d.unit, codes: d.codes, markings: d.markings, era: d.era, kitBrand: d.kitBrand, scale: d.scale })
+    .filter(([, v]) => v && v.trim()).map(([k, v]) => `${k}: ${v.trim()}`).join("\n");
+  const prompt = mode === "photo"
+    ? `The attached photo shows a finished plastic scale model of an aircraft, built and painted by a hobbyist. Identify the REAL aircraft it represents from its shape and the markings painted on the model: squadron codes, serial numbers, roundels or national insignia, unit badges, nose art, invasion stripes and camouflage.
+
+${known ? "The builder has already entered these details (treat as strong hints, correct them only if the photo clearly disagrees):\n" + known + "\n\n" : ""}${AI_SHAPE}`
+    : `A hobbyist built a plastic scale model of an aircraft and entered these details:\n${known}\n\nFill in the details of the REAL aircraft and unit these markings represent. Keep the builder's details unless they are clearly inconsistent.\n\n${AI_SHAPE}`;
+  try {
+    const opts = { signal: sh.aiCtl.signal, cache: false };
+    if (mode === "photo") opts.images = await sourceBlobForSheet(sh);
+    const r = await S.sample.json(prompt, opts);
+    if (S.sheet !== sh) return;
+    if (!r || typeof r !== "object") throw { code: "invalid_json" };
+    const applied = [];
+    sh.aiAlt = {};
+    for (const f of AI_FIELDS) {
+      const v = typeof r[f] === "string" ? r[f].trim() : "";
+      if (!v || norm(v) === norm(d[f])) continue;
+      // never overwrite what the builder typed: offer Claude's version instead
+      if (!isBlank(d[f]) && (sh.touched.has(f) || mode === "text")) { sh.aiAlt[f] = v; continue; }
+      setField(f, v, true); applied.push(f);
+    }
+    sh.aiInfo = { confidence: String(r.confidence || ""), evidence: String(r.evidence || ""), from: mode, at: new Date().toISOString() };
+    const conf = sh.aiInfo.confidence ? `Confidence: ${sh.aiInfo.confidence}. ` : "";
+    sh.aiStatus = applied.length || Object.keys(sh.aiAlt).length ? conf + (sh.aiInfo.evidence || "")
+      : (r.name ? conf + "Claude's answer matches what's already filled in." : "Claude couldn't identify this one. Fill in the details yourself.");
+    updateDupes();
+  } catch (e) {
+    if (S.sheet !== sh) return;
+    const c = e && e.code;
+    console.warn("AI failed", e);
+    if (c === "cancelled") sh.aiStatus = "Stopped.";
+    else if (c === "images_unavailable") { S.canImages = false; sh.aiStatus = "This view can't send photos to Claude. You can still fill in the details from the aircraft name."; }
+    else if (c === "not_granted" || c === "sampling_disabled" || c === "capability_disabled" || c === "not_declared") { S.sample = null; sh.aiStatus = "AI isn't available on this account or device."; }
+    else if (c === "invalid_json" || c === "empty_completion") sh.aiStatus = "Claude's answer came back garbled. Tap the button to try again.";
+    else if (c === "bad_key" || c === "no_key") sh.aiStatus = "Your Anthropic API key was rejected. Check it in Profile → AI identification.";
+    else if (c === "offline") sh.aiStatus = "You're offline. Identifying with AI needs an internet connection; everything else works offline.";
+    else if (c === "refused") sh.aiStatus = "Claude didn't answer for this photo. Try a different photo.";
+    else if (c === "image_rejected") sh.aiStatus = "Claude couldn't read this photo. Try a different one.";
+    else sh.aiStatus = errCopy(e, "reach Claude");
+    if (c && c !== "cancelled") sh.aiStatus += ` (Reason: ${c})`;
+  } finally {
+    if (S.sheet === sh) { sh.aiBusy = false; sh.aiCtl = null; updateAI(); }
+  }
+}
+
+/* ---------- save ---------- */
+async function saveSheet() {
+  const sh = S.sheet; if (!sh || sh.saving || !sh.origUrl) return;
+  if (sh.cutBusy) { toast("Wait for the background removal to finish."); return; }
+  sh.saving = true; updateSave();
+  const uploaded = [];
+  try {
+    const prev = sh.existing;
+    let originalAssetId = prev?.originalAssetId || null;
+    let displayAssetId = prev?.displayAssetId || null;
+    if (sh.origBlob) { const u = await S.assets.upload(sh.origBlob, { type: "image/jpeg" }); originalAssetId = u.id; uploaded.push(u.id); }
+    if (sh.cutBlob) { const u = await S.assets.upload(sh.cutBlob, { type: "image/png" }); displayAssetId = u.id; uploaded.push(u.id); }
+    else if (sh.origBlob) displayAssetId = null; // new photo without a cut-out
+    const now = new Date().toISOString();
+    const id = sh.id || newId();
+    const doc = Object.fromEntries(FIELDS.map((f) => [f, String(sh.draft[f] || "").trim()]));
+    Object.assign(doc, {
+      originalAssetId, displayAssetId,
+      displayMode: displayAssetId && sh.displayMode === "cutout" ? "cutout" : "framed",
+      aiPending: [...sh.aiPending],
+      ai: sh.aiInfo || null,
+      createdAt: prev?.createdAt || now,
+      updatedAt: now,
+    });
+    const ref = S.db.collection("models").doc(id);
+    await ref.set(doc);
+    // the old photos are no longer referenced once the row points at the new ones
+    if (prev) for (const old of [prev.originalAssetId, prev.displayAssetId]) {
+      if (old && old !== doc.originalAssetId && old !== doc.displayAssetId) S.assets.delete(old).catch(() => {});
+    }
+    upsertLocal({ id, ...doc });
+    const from = sh.fromKit;
+    if (from) {
+      S.db.collection(KINDS[from.kind].col).doc(from.id).delete()
+        .then(() => { S.kits[from.kind] = S.kits[from.kind].filter((x) => x.id !== from.id); })
+        .catch(() => toast("Saved. The kit is still in your " + KINDS[from.kind].title.toLowerCase() + "; remove it there."));
+    }
+    sh.saving = false;
+    closeSheet();
+    trackWrite(ref, (snap) => snap.exists && snap.data().updatedAt === now,
+      prev ? "Changes saved" : from ? "Added to My Hangar and taken off your " + KINDS[from.kind].title.toLowerCase() : "Added to My Hangar");
+    openDetail(id);
+  } catch (e) {
+    for (const a of uploaded) S.assets.delete(a).catch(() => {});
+    if (S.sheet === sh) { sh.saving = false; updateSave(); }
+    toast(errCopy(e, "save this build"));
+    console.warn("save failed", e);
+  }
+}
+
+function upsertLocal(m) {
+  const i = S.models.findIndex((x) => x.id === m.id);
+  if (i >= 0) S.models[i] = m; else S.models.push(m);
+  sortModels();
+}
+function sortModels() { S.models.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || ""))); }
+
+/* ---------- kits: stash + wishlist ----------
+   Two lists of kits, one collection each: `stash/{id}` (owned, not built) and `wishlist/{id}`
+   (wanted). Same shape: {name, kitBrand, kitNumber, scale, notes, createdAt, updatedAt} plus one
+   two-way flag: stash `status` "bench"|"box", wishlist `priority` "must"|"nice".
+   A kit moves wishlist → stash ("I bought it") → hangar ("I built it"). Every kit is checked
+   against the hangar and the other list with the same duplicate rule as the add form. */
+const KINDS = {
+  stash: {
+    col: "stash", title: "Stash", one: "kit",
+    flag: "status", flagOn: "bench", flagOff: "box", flagOnLabel: "On the bench", flagOffLabel: "In the box",
+    flagQuestion: "Have you started it?",
+    notesLabel: "Notes (where bought, price, extras)",
+    where: "In your stash", already: "Already in your stash",
+    sheetNew: "Add to stash", sheetEdit: "Stash kit", saveNew: "Add to stash",
+    added: "Added to your stash", removeTitle: "Remove this kit from your stash?", removed: "Removed from your stash",
+    emptyTitle: "Your stash is empty",
+    emptyBody: "Add the kits you own but haven't built yet. Before you buy another, the Search tab checks your stash too.",
+  },
+  wishlist: {
+    col: "wishlist", title: "Wishlist", one: "kit",
+    flag: "priority", flagOn: "must", flagOff: "nice", flagOnLabel: "Must have", flagOffLabel: "Nice to have",
+    flagQuestion: "How much do you want it?",
+    notesLabel: "Notes (shop, price, which version)",
+    where: "On your wishlist", already: "Already on your wishlist",
+    sheetNew: "Add a kit", sheetEdit: "Wishlist kit", saveNew: "Add to wishlist",
+    added: "Added to your wishlist", removeTitle: "Remove this kit from your wishlist?", removed: "Removed from your wishlist",
+    emptyTitle: "No kits on your wishlist yet",
+    emptyBody: "Add kits you want to buy or build next. Each one shows whether you already built it or have it in your stash.",
+  },
+};
+const otherKind = (kind) => (kind === "stash" ? "wishlist" : "stash");
+const kitFlagOn = (kind, k) => k[KINDS[kind].flag] === KINDS[kind].flagOn;
+
+function sortedKits(kind) {
+  return S.kits[kind].slice().sort((a, b) =>
+    (kitFlagOn(kind, a) ? 0 : 1) - (kitFlagOn(kind, b) ? 0 : 1)
+    || String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+}
+function kitFlagHTML(kind, k) { return kitFlagOn(kind, k) ? ` <span class="pri">${esc(KINDS[kind].flagOnLabel)}</span>` : ""; }
+
+function kitCardHTML(kind, k) {
+  const other = otherKind(kind);
+  const built = findDuplicates(k, null);
+  const elsewhere = findDuplicates(k, null, S.kits[other]);
+  const kit = kitLine(k);
+  const edit = !!S.assets;
+  return `<article class="kit-card">
+    <button class="kit-main" data-kit="${kind}:${esc(k.id)}" aria-label="Open ${esc(k.name || "this kit")}">
+      <span class="kit-top"><span class="kit-name">${esc(k.name || "Unnamed kit")}</span>${kitFlagHTML(kind, k)}</span>
+      ${kit ? `<span class="sub">${esc(kit)}</span>` : ""}
+      ${k.notes ? `<span class="sub">${esc(k.notes)}</span>` : ""}
+    </button>
+    ${built.length ? `<div class="dupe">
+      <strong>You've built ${built.length} like this</strong>
+      <div class="dupe-list">${built.slice(0, 8).map((m) => `<button class="dupe-item" data-open="${esc(m.id)}">${stageHTML(m)}<span>${esc(m.name)}${m.scale ? " · " + esc(m.scale) : ""}</span></button>`).join("")}</div>
+    </div>` : ""}
+    ${elsewhere.length ? `<div class="notice">${esc(KINDS[other].already)}: ${elsewhere.map((x) => esc([x.name, kitLine(x)].filter(Boolean).join(", "))).join("; ")}</div>` : ""}
+    ${edit ? `<div class="kit-actions">
+      ${kind === "wishlist" ? `<button class="btn" data-bought="${esc(k.id)}">${ICON.box} I bought it</button>` : ""}
+      <button class="btn green" data-built="${kind}:${esc(k.id)}">${ICON.check} I built it</button>
+    </div>` : ""}
+  </article>`;
+}
+function kitResultHTML(kind, k) {
+  return `<button class="result text-only" data-kit="${kind}:${esc(k.id)}">
+    <span style="min-width:0;display:grid;gap:2px">
+      <span class="name">${esc(k.name || "Unnamed kit")}${kitFlagHTML(kind, k)}</span>
+      <span class="sub">${esc(kitLine(k) || "No kit details yet")}</span>
+    </span>
+  </button>`;
+}
+/* Search-tab sections for both lists: exact text matches, else same-type matches. */
+function kitSearchHTML(q) {
+  let html = "";
+  for (const kind of ["stash", "wishlist"]) {
+    const exact = searchModels(q, S.kits[kind]);
+    const list = exact.length ? exact : findDuplicates({ name: q, kitNumber: q, kitBrand: "" }, null, S.kits[kind]);
+    if (list.length) html += `<h2 class="label section-label">${esc(KINDS[kind].where)}</h2><div class="results">${list.map((k) => kitResultHTML(kind, k)).join("")}</div>`;
+  }
+  return html;
+}
+
+function viewKits() {
+  const kind = S.kitTab;
+  const K = KINDS[kind];
+  const list = S.kits[kind];
+  const n = list.length;
+  const canEdit = !!S.assets;
+  let body;
+  if (!S.ready || S.loadError) body = notReadyHTML();
+  else if (!n) body = `
+    <div class="empty">
+      <h2>${esc(K.emptyTitle)}</h2>
+      <p>${esc(K.emptyBody)}</p>
+      ${canEdit ? `<button class="btn primary" data-act="kit-add">${esc(K.sheetNew)}</button>` : ""}
+    </div>`;
+  else body = `<div class="kit-grid">${sortedKits(kind).map((k) => kitCardHTML(kind, k)).join("")}</div>`;
+  const tabBtn = (k) => `<button type="button" id="kt-${k}" class="${k === kind ? "on" : ""}" aria-pressed="${k === kind}">${KINDS[k].title} <span class="num">(${S.kits[k].length})</span></button>`;
+  return `
+    <div class="page-head">
+      <div><div class="eyebrow">Not built yet</div><h1>Kits</h1></div>
+      <div class="count-pill num"><b>${n}</b> ${n === 1 ? "kit" : "kits"}</div>
+    </div>
+    <div class="seg kit-switch" role="group" aria-label="Which list">${tabBtn("stash")}${tabBtn("wishlist")}</div>
+    ${canEdit && n ? `<button class="btn primary block" data-act="kit-add" style="margin-top:12px">${ICON.plus} ${esc(K.sheetNew)}</button>` : ""}
+    ${body}`;
+}
+
+function findKit(ref) {
+  const [kind, id] = String(ref).split(":");
+  const k = KINDS[kind] && S.kits[kind].find((x) => x.id === id);
+  return k ? { kind, k } : null;
+}
+
+function openKit(kind, k) {
+  if (!S.db || !S.assetsChecked) { toast("Your hangar is still opening. Try again in a moment."); return; }
+  if (!S.assets) { toast("Only the hangar's owner can change these lists."); return; }
+  const K = KINDS[kind];
+  S.ksheet = {
+    kind, id: k ? k.id : null, existing: k || null, touched: false, saving: false,
+    draft: { name: k?.name || "", kitBrand: k?.kitBrand || "", kitNumber: k?.kitNumber || "", scale: k?.scale || "", flag: k && k[K.flag] === K.flagOn ? K.flagOn : K.flagOff, notes: k?.notes || "" },
+  };
+  buildKit();
+}
+function closeKit() {
+  if (!S.ksheet) return;
+  S.ksheet = null;
+  $("#layer").innerHTML = "";
+  document.body.style.overflow = "";
+  render();
+}
+function requestCloseKit() {
+  const ks = S.ksheet; if (!ks || ks.saving) return;
+  if (!ks.touched) return closeKit();
+  showDialog({ title: ks.existing ? "Discard your changes?" : "Discard this kit?", body: "What you entered won't be saved.", yes: "Discard", no: "Keep editing", onYes: closeKit });
+}
+
+function buildKit() {
+  const ks = S.ksheet; const K = KINDS[ks.kind]; const d = ks.draft;
+  const fake = { draft: d, aiPending: new Set() };   // fieldHTML/selectHTML read these
+  $("#layer").innerHTML = `
+    <div class="sheet-backdrop"></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="kit-title">
+      <div class="sheet-bar">
+        <button type="button" class="btn" id="ks-cancel">Cancel</button>
+        <h2 id="kit-title">${esc(ks.existing ? K.sheetEdit : K.sheetNew)}</h2>
+        <button type="button" class="btn primary" id="ks-save">Save</button>
+      </div>
+      <form class="sheet-body" id="kit-form" novalidate>
+        <fieldset>
+          <legend class="label">The kit</legend>
+          ${fieldHTML(fake, "name", "Aircraft", 'placeholder="e.g. Spitfire Mk IX" autocomplete="off"')}
+          <div id="ks-dupe"></div>
+          <div class="two">
+            ${selectHTML(fake, "kitBrand", "Kit brand", BRANDS)}
+            ${selectHTML(fake, "scale", "Scale", SCALES)}
+          </div>
+          ${fieldHTML(fake, "kitNumber", "Kit number (optional)", 'placeholder="From the box or the shop listing" autocomplete="off"')}
+          <div class="field">
+            <span class="field-q">${esc(K.flagQuestion)}</span>
+            <div class="seg" role="group" aria-label="${esc(K.flagQuestion)}">
+              <button type="button" id="flag-on" class="${d.flag === K.flagOn ? "on" : ""}" aria-pressed="${d.flag === K.flagOn}">${esc(K.flagOnLabel)}</button>
+              <button type="button" id="flag-off" class="${d.flag !== K.flagOn ? "on" : ""}" aria-pressed="${d.flag !== K.flagOn}">${esc(K.flagOffLabel)}</button>
+            </div>
+          </div>
+          ${fieldHTML(fake, "notes", K.notesLabel)}
+        </fieldset>
+        <div class="sheet-foot">
+          <button type="submit" class="btn primary block" id="ks-save2">${esc(ks.existing ? "Save changes" : K.saveNew)}</button>
+          ${ks.existing ? `
+            ${ks.kind === "wishlist" ? `<button type="button" class="btn block" id="ks-bought">${ICON.box} I bought it</button>` : ""}
+            <button type="button" class="btn green block" id="ks-built">${ICON.check} I built it</button>
+            <button type="button" class="btn danger block" id="ks-delete">${ICON.trash} Remove</button>` : ""}
+        </div>
+      </form>
+    </div>`;
+  document.body.style.overflow = "hidden";
+  $("#ks-cancel").onclick = requestCloseKit;
+  $("#ks-save").onclick = saveKit;
+  $("#kit-form").onsubmit = (e) => {
+    e.preventDefault();
+    if (e.submitter && e.submitter.id === "ks-save2") saveKit();
+    else if (document.activeElement) document.activeElement.blur(); // Return on the keyboard just closes it
+  };
+  const setFlag = (v) => {
+    d.flag = v; ks.touched = true;
+    for (const [id, val] of [["flag-on", K.flagOn], ["flag-off", K.flagOff]]) { const b = $("#" + id); b.classList.toggle("on", v === val); b.setAttribute("aria-pressed", String(v === val)); }
+  };
+  $("#flag-on").onclick = () => setFlag(K.flagOn);
+  $("#flag-off").onclick = () => setFlag(K.flagOff);
+  if (ks.existing) {
+    const b = $("#ks-bought"); if (b) b.onclick = () => boughtKit(ks.existing);
+    $("#ks-built").onclick = () => builtKit(ks.kind, ks.existing);
+    $("#ks-delete").onclick = () => confirmDeleteKit(ks.kind, ks.existing);
+  }
+  let t = null;
+  $("#layer").querySelectorAll("[data-f]").forEach((el) => {
+    const f = el.dataset.f;
+    el.addEventListener(el.tagName === "SELECT" ? "change" : "input", () => {
+      d[f] = el.value; ks.touched = true;
+      if (f === "name" || f === "kitNumber" || f === "kitBrand") { clearTimeout(t); t = setTimeout(updateKitDupes, 300); }
+    });
+  });
+  updateKitDupes();
+}
+
+function updateKitDupes() {
+  const ks = S.ksheet; const box = $("#ks-dupe"); if (!ks || !box) return;
+  const built = findDuplicates(ks.draft, null);
+  const notes = ["stash", "wishlist"].map((kind) => {
+    const hits = findDuplicates(ks.draft, kind === ks.kind ? ks.id : null, S.kits[kind]);
+    return hits.length ? `<div class="notice" style="margin-top:10px">${esc(KINDS[kind].already)}: ${hits.map((x) => esc([x.name, kitLine(x)].filter(Boolean).join(", "))).join("; ")}</div>` : "";
+  }).join("");
+  box.innerHTML = (built.length ? `
+    <div class="dupe" aria-live="polite">
+      <strong>You've built ${built.length} of these</strong>
+      <div class="dupe-list">${built.slice(0, 12).map((m) => `<div class="dupe-item">${stageHTML(m)}<span>${esc(m.name)}${m.unit ? " · " + esc(m.unit) : ""}${m.scale ? " · " + esc(m.scale) : ""}</span></div>`).join("")}</div>
+    </div>` : "") + notes;
+}
+
+function kitDoc(kind, d, existing) {
+  const K = KINDS[kind];
+  const now = new Date().toISOString();
+  return {
+    name: d.name.trim(), kitBrand: d.kitBrand, kitNumber: d.kitNumber.trim(), scale: d.scale,
+    [K.flag]: d.flag === K.flagOn ? K.flagOn : K.flagOff, notes: d.notes.trim(),
+    createdAt: existing?.createdAt || now, updatedAt: now,
+  };
+}
+function upsertKit(kind, k) {
+  const list = S.kits[kind];
+  const i = list.findIndex((x) => x.id === k.id);
+  if (i >= 0) list[i] = k; else list.push(k);
+}
+
+async function saveKit() {
+  const ks = S.ksheet; if (!ks || ks.saving) return;
+  const K = KINDS[ks.kind]; const d = ks.draft;
+  if (!d.name.trim() && !d.kitNumber.trim()) { toast("Add the aircraft or a kit number first."); $("#f-name")?.focus(); return; }
+  ks.saving = true;
+  for (const id of ["ks-save", "ks-save2"]) { const b = $("#" + id); if (b) { b.disabled = true; b.textContent = "Saving…"; } }
+  try {
+    const id = ks.id || (ks.kind === "stash" ? "s" : "w") + newId().slice(1);
+    const doc = kitDoc(ks.kind, d, ks.existing);
+    const ref = S.db.collection(K.col).doc(id);
+    await ref.set(doc);
+    upsertKit(ks.kind, { id, ...doc });
+    const wasNew = !ks.existing;
+    S.kitTab = ks.kind; store.set("kitTab", ks.kind);
+    ks.saving = false;
+    closeKit();
+    trackWrite(ref, (snap) => snap.exists && snap.data().updatedAt === doc.updatedAt, wasNew ? K.added : "Changes saved");
+    if (S.view.name !== "kits" && S.view.name !== "search") go("kits");
+  } catch (e) {
+    ks.saving = false;
+    for (const id of ["ks-save", "ks-save2"]) { const b = $("#" + id); if (b) b.disabled = false; }
+    $("#ks-save").textContent = "Save"; $("#ks-save2").textContent = ks.existing ? "Save changes" : K.saveNew;
+    toast(errCopy(e, "save this kit"));
+  }
+}
+
+function dropKitSheet() { if (S.ksheet) { S.ksheet = null; $("#layer").innerHTML = ""; document.body.style.overflow = ""; } }
+
+function confirmDeleteKit(kind, k) {
+  const K = KINDS[kind];
+  showDialog({
+    title: K.removeTitle,
+    body: `${k.name || "This kit"} will be taken off the list.`,
+    yes: "Remove kit", no: "Keep it",
+    onYes: async (b) => {
+      b.textContent = "Removing…";
+      const ref = S.db.collection(K.col).doc(k.id);
+      try { await ref.delete(); }
+      catch (e) { b.textContent = "Remove kit"; toast(errCopy(e, "remove this kit")); throw e; }
+      S.kits[kind] = S.kits[kind].filter((x) => x.id !== k.id);
+      dropKitSheet();
+      trackWrite(ref, (snap) => !snap.exists, K.removed);
+      render();
+    },
+  });
+}
+
+/* "I bought it": the wishlist kit moves to the stash (written there first, then removed here). */
+async function boughtKit(w) {
+  dropKitSheet();
+  const id = "s" + newId().slice(1);
+  const doc = kitDoc("stash", { name: w.name || "", kitBrand: w.kitBrand || "", kitNumber: w.kitNumber || "", scale: w.scale || "", flag: "box", notes: w.notes || "" }, null);
+  const ref = S.db.collection("stash").doc(id);
+  try { await ref.set(doc); }
+  catch (e) { toast(errCopy(e, "move this kit")); return; }
+  upsertKit("stash", { id, ...doc });
+  try {
+    await S.db.collection("wishlist").doc(w.id).delete();
+    S.kits.wishlist = S.kits.wishlist.filter((x) => x.id !== w.id);
+    trackWrite(ref, (snap) => snap.exists, "Moved to your stash");
+  } catch { toast("Added to your stash. It's still on your wishlist; remove it there."); }
+  S.kitTab = "stash"; store.set("kitTab", "stash");
+  go("kits");
+}
+
+/* "I built it": open the add-a-build form with the kit filled in; saving it clears the kit. */
+function builtKit(kind, k) {
+  dropKitSheet();
+  openSheet(null, { prefill: { name: k.name, kitBrand: k.kitBrand, kitNumber: k.kitNumber, scale: k.scale }, fromKit: { kind, id: k.id } });
+}
+
+/* ---------- export: spreadsheet (CSV) + catalogue (PDF) ----------
+   Both files are made in the browser and handed to the viewer through the `downloads` capability,
+   which asks them to confirm the save. The PDF uses jsPDF (cdnjs) and Inter TTFs published next to
+   the page (fonts/), so names like "Kościuszko" print correctly. */
+const JSPDF_URL = PWA ? "vendor/jspdf.umd.min.js" : "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+const todayISO = () => new Date().toISOString().slice(0, 10);
+let exporting = false;
+
+function exportCardHTML() {
+  if (!S.downloads) return `<p class="muted">Export isn't available in this view.</p>`;
+  return `
+    <p class="muted" style="font-size:15px">Save a copy of everything: your builds, stash and wishlist.</p>
+    <div class="export-btns">
+      <button class="btn" id="exp-csv">${ICON.sheet} Spreadsheet (CSV)</button>
+      <button class="btn" id="exp-pdf">${ICON.book} Catalogue (PDF)</button>
+    </div>
+    <div class="status" id="exp-status" aria-live="polite"></div>`;
+}
+function bindExport() {
+  const c = $("#exp-csv"); if (c) c.onclick = exportCSV;
+  const p = $("#exp-pdf"); if (p) p.onclick = exportPDF;
+}
+function exportStatus(msg, p) {
+  const el = $("#exp-status"); if (!el) return;
+  el.innerHTML = p == null ? esc(msg) : `<span>${esc(msg)}</span><span class="bar"><i style="width:${Math.round(p * 100)}%"></i></span>`;
+}
+function setExportBusy(on) { for (const id of ["exp-csv", "exp-pdf"]) { const b = document.getElementById(id); if (b) b.disabled = on; } }
+
+async function offerFile(filename, data) {
+  try {
+    await S.downloads.save({ filename, data });
+    exportStatus("Saved " + filename + ".");
+  } catch (e) {
+    const c = e && e.code;
+    exportStatus(c === "declined" ? "Not saved." : c === "rate_limited" ? "A save is already waiting for you to confirm." : "Couldn't save the file here.");
+  }
+}
+
+/* ---- CSV ---- */
+function csvCell(v) {
+  let s = String(v ?? "");
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;          // keep spreadsheet apps from running it as a formula
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+async function exportCSV() {
+  if (exporting) return;
+  const head = ["List", "Aircraft", "Air force", "Squadron or unit", "Codes", "Special markings", "Era", "Kit brand", "Kit number", "Scale", "Paints", "Date finished", "Status", "Notes", "History of the real aircraft", "Added"];
+  const rows = [head];
+  for (const m of S.models) rows.push(["Hangar", m.name, m.airForce, m.unit, m.codes, m.markings, m.era, m.kitBrand, realKitNo(m.kitNumber), m.scale, m.paints, m.finishedOn, "Built", m.notes, m.history, (m.createdAt || "").slice(0, 10)]);
+  for (const kind of ["stash", "wishlist"]) {
+    const K = KINDS[kind];
+    for (const k of sortedKits(kind)) rows.push([K.title, k.name, "", "", "", "", "", k.kitBrand, k.kitNumber, k.scale, "", "", kitFlagOn(kind, k) ? K.flagOnLabel : K.flagOffLabel, k.notes, "", (k.createdAt || "").slice(0, 10)]);
+  }
+  const text = "﻿" + rows.map((r) => r.map(csvCell).join(",")).join("\r\n") + "\r\n"; // BOM: Excel reads it as UTF-8
+  exportStatus("Getting the file ready…");
+  await offerFile(`my-hangar-${todayISO()}.csv`, text);
+}
+
+/* ---- PDF ---- */
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("script")); document.head.appendChild(s); });
+}
+async function fontBase64(file) {
+  const r = await fetch(new URL("fonts/" + file, document.baseURI)); if (!r.ok) throw new Error("font");
+  const bytes = new Uint8Array(await r.arrayBuffer());
+  let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+async function imageFromBlobId(id) {
+  if (!id) return null;
+  try {
+    const r = await fetch(blobUrl(id)); if (!r.ok) return null;
+    const url = URL.createObjectURL(await r.blob());
+    try { return await loadImage(url); } finally { URL.revokeObjectURL(url); }
+  } catch { return null; }
+}
+/* The display stand, drawn the same way the app draws it: spotlight, floor shadow, model. */
+function stageJPEG(img, cut, w, h) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d");
+  const g = x.createRadialGradient(w * 0.5, h * 0.4, 0, w * 0.5, h * 0.4, Math.max(w, h) * 0.62);
+  g.addColorStop(0, "#2b313b"); g.addColorStop(0.55, "#161a20"); g.addColorStop(1, "#090a0d");
+  x.fillStyle = g; x.fillRect(0, 0, w, h);
+  if (img) {
+    if (cut) {
+      const fl = x.createRadialGradient(w / 2, h * 0.885, 0, w / 2, h * 0.885, w * 0.32);
+      fl.addColorStop(0, "rgba(0,0,0,.6)"); fl.addColorStop(1, "rgba(0,0,0,0)");
+      x.save(); x.translate(0, h * 0.885); x.scale(1, 0.14); x.fillStyle = fl; x.fillRect(0, -h * 3, w, h * 6); x.restore();
+      const bw = w * 0.88, bh = h * 0.78, s = Math.min(bw / img.naturalWidth, bh / img.naturalHeight);
+      const iw = img.naturalWidth * s, ih = img.naturalHeight * s;
+      x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = h * 0.04; x.shadowOffsetY = h * 0.03;
+      x.drawImage(img, (w - iw) / 2, h * 0.07 + (bh - ih) / 2, iw, ih); x.restore();
+    } else {
+      const s = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+      x.drawImage(img, (w - img.naturalWidth * s) / 2, (h - img.naturalHeight * s) / 2, img.naturalWidth * s, img.naturalHeight * s);
+      const v = x.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.62);
+      v.addColorStop(0, "rgba(9,10,13,0)"); v.addColorStop(1, "rgba(9,10,13,1)");
+      x.fillStyle = v; x.fillRect(0, 0, w, h);
+    }
+  }
+  return c.toDataURL("image/jpeg", 0.86);
+}
+function thumbJPEG(img, size) {
+  const c = document.createElement("canvas"); c.width = size; c.height = size;
+  const x = c.getContext("2d");
+  const s = Math.max(size / img.naturalWidth, size / img.naturalHeight);
+  x.drawImage(img, (size - img.naturalWidth * s) / 2, (size - img.naturalHeight * s) / 2, img.naturalWidth * s, img.naturalHeight * s);
+  return c.toDataURL("image/jpeg", 0.82);
+}
+
+async function exportPDF() {
+  if (exporting) return;
+  exporting = true; setExportBusy(true);
+  try {
+    exportStatus("Loading the PDF tools…", 0.02);
+    if (!window.jspdf) await loadScript(JSPDF_URL);
+    const fonts = await Promise.all(["Inter-Regular.ttf", "Inter-SemiBold.ttf", "Inter-ExtraBold.ttf"].map(fontBase64));
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+    [["Inter-Regular.ttf", "normal"], ["Inter-SemiBold.ttf", "bold"], ["Inter-ExtraBold.ttf", "heavy"]].forEach(([f, st], i) => {
+      doc.addFileToVFS(f, fonts[i]); doc.addFont(f, "Inter", st);
+    });
+    const W = 612, H = 792, M = 48, CW = W - M * 2;
+    const INK = [22, 25, 31], INK2 = [92, 99, 110], INK3 = [140, 146, 156], GOLD = [168, 123, 44], LINE = [222, 225, 230], NIGHT = [13, 15, 19];
+    const font = (st, size, col) => { doc.setFont("Inter", st); doc.setFontSize(size); doc.setTextColor(...col); };
+    const eyebrow = (t, x, y, col = GOLD) => { font("bold", 8.5, col); doc.setCharSpace(1.4); doc.text(t.toUpperCase(), x, y); doc.setCharSpace(0); };
+    const models = S.models;
+    const total = models.length;
+
+    // images first, with progress
+    const pics = [];
+    for (let i = 0; i < total; i++) {
+      exportStatus(`Preparing photos (${i + 1} of ${total})…`, 0.05 + 0.75 * (i / Math.max(1, total)));
+      const m = models[i];
+      const cut = m.displayMode === "cutout" && m.displayAssetId;
+      const [disp, orig] = await Promise.all([imageFromBlobId(cut ? m.displayAssetId : m.originalAssetId), cut ? imageFromBlobId(m.originalAssetId) : null]);
+      pics.push({ stage: stageJPEG(disp, !!cut, 1400, 840), cover: stageJPEG(disp, !!cut, 480, 360), orig: (orig || disp) ? thumbJPEG(orig || disp, 240) : null });
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    exportStatus("Laying out pages…", 0.85);
+
+    // cover: dark, like the app
+    doc.setFillColor(...NIGHT); doc.rect(0, 0, W, H, "F");
+    eyebrow("Built & displayed", M, 92, [233, 194, 122]);
+    font("heavy", 46, [238, 240, 243]); doc.text("My Hangar", M, 140);
+    const stashN = S.kits.stash.length, wishN = S.kits.wishlist.length;
+    font("normal", 13, [169, 176, 187]);
+    doc.text(`${total} ${total === 1 ? "model" : "models"} built · ${stashN} in the stash · ${wishN} on the wishlist`, M, 166);
+    doc.text(`Exported ${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}`, M, 184);
+    const cols = 3, gap = 12, tw = (CW - gap * (cols - 1)) / cols, th = tw * 0.75;
+    pics.slice(0, 12).forEach((p, i) => {
+      const cx = M + (i % cols) * (tw + gap), cy = 220 + Math.floor(i / cols) * (th + 30);
+      doc.addImage(p.cover, "JPEG", cx, cy, tw, th);
+      font("bold", 9, [238, 240, 243]);
+      doc.text(doc.splitTextToSize(models[i].name || "Untitled build", tw)[0], cx, cy + th + 14);
+    });
+
+    // one page per build
+    models.forEach((m, i) => {
+      doc.addPage();
+      eyebrow("My Hangar", M, 40, INK3);
+      font("normal", 9, INK3); doc.text(`${i + 1} of ${total}`, W - M, 40, { align: "right" });
+      doc.setDrawColor(...LINE); doc.setLineWidth(0.6); doc.line(M, 48, W - M, 48);
+      const sh = CW * 0.6;
+      doc.addImage(pics[i].stage, "JPEG", M, 62, CW, sh);
+      if (pics[i].orig) {   // the original photo, inset in the corner like the app's "tap to compare"
+        doc.setFillColor(255, 255, 255); doc.rect(M + 11, 62 + sh - 73, 62, 62, "F");
+        doc.addImage(pics[i].orig, "JPEG", M + 12, 62 + sh - 72, 60, 60);
+        font("normal", 7.5, [200, 205, 212]); doc.text("Original photo", M + 80, 62 + sh - 15);
+      }
+      let y = 62 + sh + 34;
+      const eb = [m.airForce, m.era].filter(Boolean).join(" · ");
+      if (eb) { eyebrow(eb, M, y); y += 26; }
+      font("heavy", 24, INK);
+      const title = doc.splitTextToSize(m.name || "Untitled build", CW);
+      doc.text(title, M, y); y += title.length * 28;
+      if (m.unit) { font("normal", 12.5, INK2); const u = doc.splitTextToSize(m.unit, CW); doc.text(u, M, y - 6); y += u.length * 16; }
+      // chips
+      const chips = [m.scale, m.codes && "Code " + m.codes, m.markings, yearOf(m.finishedOn) && "Built " + yearOf(m.finishedOn)].filter(Boolean);
+      if (chips.length) {
+        font("bold", 9.5, INK); let cx = M; y += 4;
+        for (const c of chips) {
+          const w = doc.getTextWidth(c) + 18;
+          if (cx + w > W - M) { cx = M; y += 26; }
+          doc.setDrawColor(...LINE); doc.roundedRect(cx, y - 13, w, 20, 5, 5, "S");
+          doc.text(c, cx + 9, y + 0.5); cx += w + 6;
+        }
+        y += 26;
+      }
+      // two columns: the real aircraft | your build
+      const lx = M, lw = CW * 0.56, rx = M + lw + 24, rw = CW - lw - 24;
+      const top = y + 6;
+      eyebrow("The real aircraft", lx, top, INK3);
+      font("normal", 10.5, INK);
+      const hist = doc.splitTextToSize(m.history || "No history recorded yet.", lw);
+      const maxLines = Math.floor((H - 70 - (top + 18)) / 14.5);
+      doc.text(hist.slice(0, maxLines), lx, top + 18, { lineHeightFactor: 1.38 });
+      eyebrow("Your build", rx, top, INK3);
+      let ry = top + 18;
+      for (const [k, v] of [["Kit", kitLine(m)], ["Finished", fmtMonth(m.finishedOn)], ["Paints", m.paints], ["Notes", m.notes]]) {
+        if (!v) continue;
+        font("normal", 8.5, INK3); doc.text(k, rx, ry);
+        font("bold", 10, INK); const lines = doc.splitTextToSize(v, rw).slice(0, 6);
+        doc.text(lines, rx, ry + 13, { lineHeightFactor: 1.3 }); ry += 13 + lines.length * 13 + 9;
+      }
+    });
+
+    // stash + wishlist pages
+    for (const kind of ["stash", "wishlist"]) {
+      const list = sortedKits(kind); if (!list.length) continue;
+      const K = KINDS[kind];
+      doc.addPage();
+      eyebrow("Not built yet", M, 64);
+      font("heavy", 28, INK); doc.text(K.title, M, 98);
+      font("normal", 11, INK2); doc.text(`${list.length} ${list.length === 1 ? "kit" : "kits"}`, M, 118);
+      let y = 150;
+      for (const k of list) {
+        const sub = [kitLine(k), kitFlagOn(kind, k) ? K.flagOnLabel : "", k.notes].filter(Boolean).join(" · ");
+        const subLines = sub ? doc.splitTextToSize(sub, CW) : [];
+        const need = 22 + subLines.length * 13 + 12;
+        if (y + need > H - 50) { doc.addPage(); y = 64; }
+        font("bold", 12, INK); doc.text(doc.splitTextToSize(k.name || "Unnamed kit", CW)[0], M, y);
+        if (subLines.length) { font("normal", 9.5, INK2); doc.text(subLines, M, y + 15); }
+        y += need; doc.setDrawColor(...LINE); doc.line(M, y - 10, W - M, y - 10);
+      }
+    }
+
+    exportStatus("Getting the file ready…", 0.97);
+    const blob = doc.output("blob");
+    exporting = false;
+    await offerFile(`my-hangar-catalogue-${todayISO()}.pdf`, blob);
+  } catch (e) {
+    console.warn("pdf export failed", e);
+    exportStatus(String(e && e.message) === "script" || String(e && e.message) === "font"
+      ? "The PDF tools couldn't load. Check your connection and try again."
+      : "Couldn't make the PDF. Try again.");
+  } finally {
+    exporting = false; setExportBusy(false);
+  }
+}
+
+/* ---------- installed version only: backup + the AI key (window.hangarPlatform) ---------- */
+let lastBackupISO = "";
+const daysSince = (iso) => Math.floor((Date.now() - Date.parse(iso)) / 864e5);
+function backupDue() { return !lastBackupISO || daysSince(lastBackupISO) >= 14; }
+function backupAgeText() {
+  if (!lastBackupISO) return "No backup saved yet.";
+  const d = daysSince(lastBackupISO);
+  return "Last backup: " + (d === 0 ? "today." : d === 1 ? "yesterday." : d + " days ago.");
+}
+function deviceCardsHTML() {
+  if (!PWA) return "";
+  return `
+    <section class="card">
+      <h2 class="label">Backup</h2>
+      <p class="muted" style="font-size:15px">Your hangar is stored on this phone only. Save a backup file to iCloud Drive or Files now and then, so a lost phone doesn't mean a lost collection.</p>
+      <div class="muted" id="bk-when" style="font-size:14px">${esc(backupAgeText())}</div>
+      <div class="export-btns">
+        <button class="btn primary" id="bk-save">${ICON.box} Save backup</button>
+        <label class="btn file-btn">${ICON.image} Restore a backup<input type="file" accept=".zip,application/zip" id="bk-restore" aria-label="Restore a backup"></label>
+      </div>
+      <div class="status" id="bk-status" aria-live="polite"></div>
+    </section>
+    <section class="card">
+      <h2 class="label">AI identification</h2>
+      <div id="ai-key-box" class="muted">Checking…</div>
+    </section>`;
+}
+async function renderKeyBox() {
+  const box = $("#ai-key-box"); if (!box) return;
+  const P = window.hangarPlatform;
+  const has = !!(await P.apiKey());
+  if (has) {
+    const sp = await P.spend();
+    box.innerHTML = `<p style="font-size:15px">Connected. "Identify with AI" sends the photo to Claude (${esc(P.model)}) using your Anthropic API key, which is stored on this phone only.</p>
+      <p class="muted num" style="font-size:14px">Spent from this phone: about $${sp.usd.toFixed(2)} over ${sp.calls} ${sp.calls === 1 ? "identification" : "identifications"} (estimate).</p>
+      <div class="export-btns"><button class="btn" id="key-remove">Remove key</button></div>`;
+    $("#key-remove").onclick = () => showDialog({
+      title: "Remove your API key?", body: "AI identification turns off on this phone until you add a key again.", yes: "Remove key", no: "Keep it",
+      onYes: async () => { await P.setApiKey(""); S.sample = null; S.canImages = false; toast("Key removed"); renderKeyBox(); },
+    });
+  } else {
+    box.innerHTML = `<p style="font-size:15px">To have Claude identify aircraft from your photos, paste an Anthropic API key. It's stored on this phone only and never leaves it except to talk to Claude. Each identification is charged to that key, usually a few cents.</p>
+      <p class="muted" style="font-size:14px">Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--gold)">console.anthropic.com</a>.</p>
+      <div class="field"><label for="key-input">API key</label><input id="key-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…" enterkeyhint="done"></div>
+      <div class="export-btns"><button class="btn primary" id="key-save">Save key</button></div>`;
+    $("#key-save").onclick = async () => {
+      const v = $("#key-input").value.trim();
+      if (!/^sk-ant-/.test(v)) { toast("That doesn't look like an Anthropic API key. It starts with sk-ant-."); return; }
+      await P.setApiKey(v);
+      S.sample = await claude.use("sample");
+      S.canImages = !!(await S.sample.limits()).images;
+      toast("Key saved. AI identification is on.");
+      renderKeyBox();
+    };
+  }
+}
+function bindDeviceCards() {
+  if (!PWA || !$("#bk-save")) return;
+  const P = window.hangarPlatform;
+  const st = (m) => { const el = $("#bk-status"); if (el) el.textContent = m; };
+  $("#bk-save").onclick = async () => {
+    const b = $("#bk-save"); b.disabled = true; st("Packing your hangar…");
+    try {
+      const r = await P.backup();
+      lastBackupISO = await P.lastBackup();
+      const w = $("#bk-when"); if (w) w.textContent = backupAgeText();
+      const pl = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+      st(`Backup ready: ${pl(r.counts[0], "build", "builds")}, ${pl(r.counts[1], "stash kit", "stash kits")}, ${pl(r.counts[2], "wishlist kit", "wishlist kits")}, ${pl(r.photos, "photo", "photos")}.`);
+    } catch (e) {
+      st(e && e.code === "declined" ? "Backup not saved." : "Couldn't make the backup. Try again.");
+    } finally { b.disabled = false; }
+  };
+  const inp = $("#bk-restore");
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0]; inp.value = ""; if (!f) return;
+    st("Reading the backup…");
+    let bk;
+    try { bk = await P.readBackup(f); }
+    catch { st("That file isn't a My Hangar backup."); return; }
+    const d = bk.data, n = (k) => (d[k] || []).length;
+    st("");
+    showDialog({
+      title: "Restore this backup?",
+      body: `It has ${n("models")} builds, ${n("stash")} stash kits and ${n("wishlist")} wishlist kits, saved ${new Date(d.exportedAt).toLocaleDateString()}. They're added to this phone; anything with the same ID is replaced. Nothing is deleted.`,
+      yes: "Restore", no: "Cancel",
+      onYes: async (b) => { b.textContent = "Restoring…"; await P.restoreBackup(bk); toast("Backup restored"); },
+    });
+  };
+  renderKeyBox();
+}
+
+/* ---------- confirm dialog (the viewer blocks window.confirm) ---------- */
+function closeDialog() { $("#dlg").innerHTML = ""; }
+function showDialog({ title, body, yes, no, onYes }) {
+  const box = $("#dlg");
+  box.innerHTML = `<div class="dialog-backdrop" id="dlg-bg"></div>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlg-t" aria-describedby="dlg-d">
+      <h2 id="dlg-t">${esc(title)}</h2>
+      <p id="dlg-d">${esc(body)}</p>
+      <div class="btns">
+        <button class="btn danger block" id="dlg-yes">${esc(yes)}</button>
+        <button class="btn block" id="dlg-no">${esc(no)}</button>
+      </div>
+    </div>`;
+  $("#dlg-bg").onclick = closeDialog; $("#dlg-no").onclick = closeDialog;
+  $("#dlg-no").focus();
+  $("#dlg-yes").onclick = async () => {
+    const b = $("#dlg-yes"); b.disabled = true;
+    try { await onYes(b); closeDialog(); } catch { b.disabled = false; }
+  };
+}
+
+/* ---------- delete ---------- */
+function confirmDelete(m) {
+  showDialog({
+    title: "Delete this build?",
+    body: `${m.name || "This build"} and its photos will be removed from My Hangar for good.`,
+    yes: "Delete build", no: "Keep it",
+    onYes: async (b) => {
+      b.textContent = "Deleting…";
+      const ref = S.db.collection("models").doc(m.id);
+      try { await ref.delete(); }
+      catch (e) { b.textContent = "Delete build"; toast(errCopy(e, "delete this build")); throw e; }
+      for (const a of [m.originalAssetId, m.displayAssetId]) if (a) S.assets.delete(a).catch(() => {});
+      S.models = S.models.filter((x) => x.id !== m.id);
+      trackWrite(ref, (snap) => !snap.exists, "Build deleted"); go("hangar");
+    },
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if ($("#dlg").innerHTML) closeDialog();
+  else if (S.sheet) requestCloseSheet();
+  else if (S.ksheet) requestCloseKit();
+});
+
+/* ---------- boot ---------- */
+S.kitTab = store.get("kitTab", "stash") === "wishlist" ? "wishlist" : "stash";
+render();
+(async function boot() {
+  if (!window.claude || typeof window.claude.use !== "function") {
+    S.loadError = "Open this page on claude.ai to see your hangar. Your builds are stored with the page there.";
+    render(); return;
+  }
+  // Photos and AI load on their own, so a slow capability never holds up the collection.
+  claude.use("assets").catch(() => null).then((a) => { S.assets = a; S.assetsChecked = true; if (S.view.name === "detail" && !S.sheet) render(); });
+  claude.use("downloads").catch(() => null).then((d) => {
+    S.downloads = d;
+    const box = $("#export-box"); if (box && !exporting) { box.innerHTML = exportCardHTML(); bindExport(); }
+  });
+  claude.use("sample").catch(() => null).then(async (sm) => {
+    S.sample = sm;
+    if (sm) { try { S.canImages = !!(await sm.limits()).images; } catch { S.canImages = false; } }
+    if (PWA && !S.canImages) S.sample = null;   // no API key on this device yet
+    if (S.sheet) updateAI();
+  });
+  if (PWA) lastBackupISO = await window.hangarPlatform.lastBackup().catch(() => "");
+  const db = await claude.use("db").catch(() => null);
+  S.db = db;
+  if (!db) { S.loadError = "Sign in to Claude to open your hangar."; render(); return; }
+  // Redraw after data changes without disturbing an open form or a focused search box.
+  const onDataChange = () => {
+    if (S.sheet) updateDupes();
+    else if (S.ksheet) updateKitDupes();
+    else if ((S.view.name === "hangar" || S.view.name === "search") && document.activeElement && document.activeElement.type === "search") refreshResults();
+    else render();
+  };
+  for (const kind of ["stash", "wishlist"]) {
+    db.collection(KINDS[kind].col).onSnapshot((snap) => {
+      S.kits[kind] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      if (S.ready) onDataChange();
+    }, () => {});
+  }
+  db.collection("models").onSnapshot((snap) => {
+    S.models = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    sortModels();
+    S.ready = true; S.loadError = "";
+    onDataChange();
+  }, (e) => {
+    S.loadError = e && e.code === "revoked" ? "This hangar is no longer available to you." : "Your hangar couldn't load. Reload the page to try again.";
+    render();
+  });
+})();
+</script>
+
+</body>
+</html>
