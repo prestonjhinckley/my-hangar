@@ -13,8 +13,14 @@
 (function () {
   const DB_NAME = "my-hangar";
   const COLLECTIONS = ["models", "stash", "wishlist"];
-  const MODEL = "claude-opus-5-5";
-  const PRICE_IN = 4 / 1e6, PRICE_OUT = 20 / 1e6;   // USD per token for claude-opus-5-5 (Sept 2026 list price)
+  /* The owner picks the model in Profile. List prices in USD per million tokens (Sept 2026);
+     `cacheRead` is the cached-input multiplier. Haiku 4.5 is the default: cheapest, and it reads
+     photos and returns the same structured answer. Opus 5.5 is the more capable choice. */
+  const MODELS = {
+    "claude-haiku-4-5": { label: "Claude Haiku 4.5", short: "Cheapest", perPhoto: "under 1¢ per photo", inM: 1, outM: 5, cacheRead: 0.1 },
+    "claude-opus-5-5": { label: "Claude Opus 5.5", short: "Most accurate", perPhoto: "about 3–6¢ per photo", inM: 4, outM: 20, cacheRead: 0.05 },
+  };
+  const DEFAULT_MODEL = "claude-haiku-4-5";
 
   /* ---------- IndexedDB ---------- */
   let dbp = null;
@@ -208,10 +214,12 @@
     additionalProperties: false,
   };
 
-  async function addSpend(usage) {
+  async function currentModel() { const m = await setting.get("model"); return MODELS[m] ? m : DEFAULT_MODEL; }
+  async function addSpend(model, usage) {
     if (!usage) return;
+    const p = MODELS[model] || MODELS[DEFAULT_MODEL];
     const cur = (await setting.get("spend")) || { usd: 0, calls: 0 };
-    const usd = (usage.input_tokens || 0) * PRICE_IN + (usage.cache_read_input_tokens || 0) * PRICE_IN * 0.05 + (usage.output_tokens || 0) * PRICE_OUT;
+    const usd = ((usage.input_tokens || 0) * p.inM + (usage.cache_read_input_tokens || 0) * p.inM * p.cacheRead + (usage.output_tokens || 0) * p.outM) / 1e6;
     await setting.set("spend", { usd: cur.usd + usd, calls: cur.calls + 1 });
   }
 
@@ -224,16 +232,28 @@
     if (opts.images) content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: await imageForClaude(opts.images) } });
     content.push({ type: "text", text: prompt });
     const client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true, maxRetries: 1 });
+    const model = await currentModel();
+    const format = { type: "json_schema", schema: ANSWER_SCHEMA };
     let response;
     try {
-      response = await client.beta.messages.create({
-        model: MODEL,
-        max_tokens: 16000,
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",                       // a policy decline re-runs on Anthropic's recommended fallback model
-        output_config: { effort: "medium", format: { type: "json_schema", schema: ANSWER_SCHEMA } },
-        messages: [{ role: "user", content }],
-      }, { signal: opts.signal });
+      if (model === "claude-opus-5-5") {
+        response = await client.beta.messages.create({
+          model,
+          max_tokens: 16000,
+          betas: ["server-side-fallback-2026-07-01"],
+          fallbacks: "default",                     // a policy decline re-runs on Anthropic's recommended fallback model
+          output_config: { effort: "medium", format },
+          messages: [{ role: "user", content }],
+        }, { signal: opts.signal });
+      } else {
+        // Haiku 4.5: no effort setting (it rejects one) and no server-side fallbacks
+        response = await client.messages.create({
+          model,
+          max_tokens: 4000,
+          output_config: { format },
+          messages: [{ role: "user", content }],
+        }, { signal: opts.signal });
+      }
     } catch (e) {
       if (opts.signal && opts.signal.aborted) throw { code: "cancelled", message: "Stopped" };
       if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) throw { code: "bad_key", message: e.message };
@@ -243,7 +263,7 @@
       if (e instanceof Anthropic.APIError) throw { code: "upstream_error", message: e.message };
       throw { code: "upstream_error", message: String(e && e.message || e) };
     }
-    addSpend(response.usage).catch(() => {});
+    addSpend(model, response.usage).catch(() => {});
     if (response.stop_reason === "refusal") throw { code: "refused", message: "Claude declined this request" };
     const text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
     try { return JSON.parse(text); }
@@ -326,7 +346,9 @@
     },
   };
   window.hangarPlatform = {
-    model: MODEL,
+    models: MODELS,
+    model: currentModel,
+    async setModel(m) { if (MODELS[m]) await setting.set("model", m); },
     apiKey, async setApiKey(k) { if (k) await setting.set("apiKey", k.trim()); else await setting.del("apiKey"); },
     spend: async () => (await setting.get("spend")) || { usd: 0, calls: 0 },
     lastBackup: async () => (await setting.get("lastBackup")) || "",

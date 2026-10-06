@@ -2011,21 +2011,37 @@ function deviceCardsHTML() {
       <div id="ai-key-box" class="muted">Checking…</div>
     </section>`;
 }
+/* Which Claude model identifies aircraft: Haiku (cheapest, the default) or Opus (most accurate). */
+async function modelPickerHTML() {
+  const P = window.hangarPlatform, cur = await P.model();
+  return `<div class="field"><span class="field-q">Which Claude model?</span>
+    <div class="seg" role="group" aria-label="Claude model">${Object.entries(P.models).map(([id, m]) =>
+      `<button type="button" data-model="${esc(id)}" class="${id === cur ? "on" : ""}" aria-pressed="${id === cur}">${esc(m.short)}</button>`).join("")}</div>
+    <span class="muted" style="font-size:14px">${esc(P.models[cur].label)}, ${esc(P.models[cur].perPhoto)}.</span></div>`;
+}
+function bindModelPicker() {
+  $("#ai-key-box").querySelectorAll("[data-model]").forEach((b) => b.onclick = async () => {
+    await window.hangarPlatform.setModel(b.dataset.model);
+    renderKeyBox();
+  });
+}
 async function renderKeyBox() {
   const box = $("#ai-key-box"); if (!box) return;
   const P = window.hangarPlatform;
   const has = !!(await P.apiKey());
   if (has) {
     const sp = await P.spend();
-    box.innerHTML = `<p style="font-size:15px">Connected. "Identify with AI" sends the photo to Claude (${esc(P.model)}) using your Anthropic API key, which is stored on this phone only.</p>
+    box.innerHTML = `<p style="font-size:15px">Connected. "Identify with AI" sends the photo to Claude using your Anthropic API key, which is stored on this phone only.</p>
+      ${await modelPickerHTML()}
       <p class="muted num" style="font-size:14px">Spent from this phone: about $${sp.usd.toFixed(2)} over ${sp.calls} ${sp.calls === 1 ? "identification" : "identifications"} (estimate).</p>
       <div class="export-btns"><button class="btn" id="key-remove">Remove key</button></div>`;
+    bindModelPicker();
     $("#key-remove").onclick = () => showDialog({
       title: "Remove your API key?", body: "AI identification turns off on this phone until you add a key again.", yes: "Remove key", no: "Keep it",
       onYes: async () => { await P.setApiKey(""); S.sample = null; S.canImages = false; toast("Key removed"); renderKeyBox(); },
     });
   } else {
-    box.innerHTML = `<p style="font-size:15px">To have Claude identify aircraft from your photos, paste an Anthropic API key. It's stored on this phone only and never leaves it except to talk to Claude. Each identification is charged to that key, usually a few cents.</p>
+    box.innerHTML = `<p style="font-size:15px">To have Claude identify aircraft from your photos, paste an Anthropic API key. It's stored on this phone only and never leaves it except to talk to Claude. Each identification is charged to that key: under 1¢ with the cheapest model.</p>
       <p class="muted" style="font-size:14px">Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--gold)">console.anthropic.com</a>.</p>
       <div class="field"><label for="key-input">API key</label><input id="key-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…" enterkeyhint="done"></div>
       <div class="export-btns"><button class="btn primary" id="key-save">Save key</button></div>`;

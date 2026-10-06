@@ -1,6 +1,6 @@
 /* My Hangar service worker: offline app shell, cached cut-out model, and photos from IndexedDB.
    VERSION is replaced by build.py on every build, so a new deploy installs fresh files. */
-const VERSION = "cbc640f77ab7";
+const VERSION = "0020e40b670a";
 const SHELL = "hangar-shell-" + VERSION;
 const BIG = "hangar-model-v1";            // the cut-out model and runtime (57 MB); only changes if the files change
 const SHELL_FILES = ["./", "index.html", "platform.js", "manifest.webmanifest", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "vendor/anthropic-sdk.mjs", "vendor/fflate.mjs", "vendor/jspdf.umd.min.js", "vendor/ort-wasm-simd-threaded.mjs", "vendor/ort.wasm.bundle.min.mjs", "fonts/Inter-ExtraBold.ttf", "fonts/Inter-Regular.ttf", "fonts/Inter-SemiBold.ttf", "fonts/inter-latin-ext.woff2", "fonts/inter-latin.woff2"];
