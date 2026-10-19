@@ -25,6 +25,7 @@ img { max-width: 100%; }
 @font-face { font-family: "Inter"; font-style: normal; font-weight: 400 800; font-display: swap; src: url(fonts/inter-latin.woff2) format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 </style>
+<script>window.HANGAR_BUILD = "2026-10-18 22:45";</script>
 <script src="platform.js"></script>
 </head>
 <body>
@@ -417,6 +418,12 @@ legend { padding: 0; margin-bottom: 4px; }
 /* The same page runs on claude.ai (as an artifact) and as the installable app (pwa/), where
    pwa/src/platform.js supplies storage, photos, AI and saving on the device and sets this. */
 const PWA = !!window.hangarPlatform;
+/* AI identification is switched off for the tester release (no API costs): details are typed in
+   by hand. Flip to true to bring back "Identify with AI" and its settings; the code is intact. */
+const AI_ENABLED = false;
+/* Background removal is free (it runs on the device, no account or credits) but optional:
+   new photos show as taken, and each build has a "Remove background" button. */
+const CUTOUT_BY_DEFAULT = false;
 
 /* ---------- constants ---------- */
 const BRANDS = ["Revell", "Airfix", "Tamiya", "Italeri", "Hasegawa", "Eduard", "Academy", "Other"];
@@ -709,7 +716,7 @@ function viewDetail() {
     <div class="notice">${S.ready ? "This build isn't in your hangar any more." : "Opening your hangar…"}</div>`;
   const idx = S.models.indexOf(m) + 1;
   const hasCut = m.displayMode === "cutout" && m.displayAssetId;
-  const aiPending = (m.aiPending || []).length > 0;
+  const aiPending = AI_ENABLED && (m.aiPending || []).length > 0;
   const eyebrow = [m.airForce, m.era].filter(Boolean).join(" · ");
   const chips = [m.scale, m.codes && "Code " + m.codes, m.markings, yearOf(m.finishedOn) && "Built " + yearOf(m.finishedOn)].filter(Boolean);
   const dots = hasCut ? `<div class="dots" aria-hidden="true"><i class="${!S.heroShowOriginal ? "on" : ""}"></i><i class="${S.heroShowOriginal ? "on" : ""}"></i></div>` : "";
@@ -736,7 +743,7 @@ function viewDetail() {
     <div class="cards">
       <section class="card" aria-labelledby="h-real">
         <h2 class="label" id="h-real">The real aircraft</h2>
-        ${m.history ? `<p class="story">${esc(m.history)}</p>` : `<p class="empty-note">No history yet.${canEdit ? " Tap Edit to have Claude fill it in, or write it yourself." : ""}</p>`}
+        ${m.history ? `<p class="story">${esc(m.history)}</p>` : `<p class="empty-note">No history yet.${canEdit ? (AI_ENABLED ? " Tap Edit to have Claude fill it in, or write it yourself." : " Tap Edit to add the story of the real aircraft.") : ""}</p>`}
         ${hasCut ? `<button class="compare" data-act="flip">
           <img src="${esc(S.heroShowOriginal ? blobUrl(m.displayAssetId) : blobUrl(m.originalAssetId))}" alt="">
           <span><span class="c1" style="display:block">${S.heroShowOriginal ? "Display image · tap to compare" : "Original photo · tap to compare"}</span><span class="c2" style="display:block">Background removed, your paint job untouched</span></span>
@@ -759,7 +766,7 @@ function viewDetail() {
 }
 
 function viewProfile() {
-  const auto = store.get("autoCutout", true);
+  const auto = store.get("autoCutout", CUTOUT_BY_DEFAULT);
   const total = S.models.length;
   const scales = {};
   for (const m of S.models) if (m.scale) scales[m.scale] = (scales[m.scale] || 0) + 1;
@@ -790,8 +797,9 @@ function viewProfile() {
       </section>
       <section class="card">
         <h2 class="label">About</h2>
-        <p class="muted">${PWA ? "My Hangar. Your builds are saved on this device only; keep a backup. Photos stay as you took them; the display image only removes the background."
-          : "My Hangar. Your builds are saved with this page on your Claude account. Photos stay as you took them; the display image only removes the background."}</p>
+        <p class="muted">${PWA ? "My Hangar. Your builds are saved on this device only; keep a backup. Photos stay as you took them; removing the background never changes the model itself."
+          : "My Hangar. Your builds are saved with this page on your Claude account. Photos stay as you took them; removing the background never changes the model itself."}</p>
+        ${window.HANGAR_BUILD ? `<p class="muted num" style="font-size:14px">Version ${esc(window.HANGAR_BUILD)}</p>` : ""}
       </section>
     </div>`;
 }
@@ -900,7 +908,7 @@ function openSheet(model, opts = {}) {
     existing: model || null,
     draft: d,
     touched: new Set(pre.map(([k]) => k)), // fields typed (or brought from a kit); AI never overwrites them
-    aiPending: new Set(model?.aiPending || []),
+    aiPending: new Set(AI_ENABLED ? model?.aiPending || [] : []),   // with AI off, old suggestions count as confirmed
     aiInfo: model?.ai || null,
     origBlob: null, origUrl: model ? blobUrl(model.originalAssetId) : "",
     cutBlob: null, cutUrl: model && model.displayAssetId ? blobUrl(model.displayAssetId) : "",
@@ -1056,7 +1064,8 @@ function updatePhoto() {
       ${sh.cutBusy ? "" : `<div class="small-actions">
         ${!sh.cutUrl ? `<button type="button" class="btn" id="do-cut">Remove background</button>` : ""}
         <label class="btn file-btn">${ICON.camera} Replace photo<input type="file" accept="image/*" id="file-replace" aria-label="Replace photo"></label>
-      </div>`}
+      </div>
+      ${!sh.cutUrl ? `<p class="muted" style="font-size:14px;margin:0">Removing the background is optional and free: it runs on this device and takes about 15 seconds. The first time, it downloads the tool (about 57 MB).</p>` : ""}`}
     </div>` : `
     <div class="photo-pick">
       ${ICON.camera.replace("<svg", '<svg width="40" height="40" style="color:var(--gold)"')}
@@ -1088,6 +1097,7 @@ function aiMode() {
 }
 function updateAI() {
   const sh = S.sheet; const box = $("#sh-ai"); if (!sh || !box) return;
+  if (!AI_ENABLED) { box.innerHTML = ""; return; }
   const mode = aiMode();
   if (!mode && !sh.aiStatus) {
     box.innerHTML = PWA ? `<div class="ai-panel"><span class="label">Identify the aircraft</span><div class="why">Add your Anthropic API key in Profile → AI identification, and Claude can identify the aircraft from your photo.</div></div>` : "";
@@ -1181,7 +1191,7 @@ async function takePhoto(file) {
   sh.cutBlob = null; sh.cutUrl = ""; sh.displayMode = "framed";
   sh.cutStatus = ""; sh.aiInfo = null; sh.aiStatus = ""; sh.aiAlt = {};
   updatePhoto(); updateAI(); updateSave();
-  if (store.get("autoCutout", true)) runCutout();
+  if (store.get("autoCutout", CUTOUT_BY_DEFAULT)) runCutout();
 }
 
 /* Background removal: ISNet (quantised) running in onnxruntime-web WASM, on this device.
@@ -2006,10 +2016,10 @@ function deviceCardsHTML() {
       </div>
       <div class="status" id="bk-status" aria-live="polite"></div>
     </section>
-    <section class="card">
+    ${AI_ENABLED ? `<section class="card">
       <h2 class="label">AI identification</h2>
       <div id="ai-key-box" class="muted">Checking…</div>
-    </section>`;
+    </section>` : ""}`;
 }
 /* Which Claude model identifies aircraft: Haiku (cheapest, the default) or Opus (most accurate). */
 async function modelPickerHTML() {
@@ -2088,7 +2098,7 @@ function bindDeviceCards() {
       onYes: async (b) => { b.textContent = "Restoring…"; await P.restoreBackup(bk); toast("Backup restored"); },
     });
   };
-  renderKeyBox();
+  if (AI_ENABLED) renderKeyBox();
 }
 
 /* ---------- confirm dialog (the viewer blocks window.confirm) ---------- */
@@ -2151,7 +2161,8 @@ render();
     S.downloads = d;
     const box = $("#export-box"); if (box && !exporting) { box.innerHTML = exportCardHTML(); bindExport(); }
   });
-  claude.use("sample").catch(() => null).then(async (sm) => {
+  if (!AI_ENABLED && PWA) window.hangarPlatform.setApiKey("").catch(() => {});   // AI is off: don't keep a key on the device
+  if (AI_ENABLED) claude.use("sample").catch(() => null).then(async (sm) => {
     S.sample = sm;
     if (sm) { try { S.canImages = !!(await sm.limits()).images; } catch { S.canImages = false; } }
     if (PWA && !S.canImages) S.sample = null;   // no API key on this device yet
